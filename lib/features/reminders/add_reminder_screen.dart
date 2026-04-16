@@ -7,6 +7,7 @@ import '../../core/providers/database_provider.dart';
 import '../../services/database/database.dart';
 import '../../services/models/enums.dart';
 import '../../services/notification_service.dart';
+import '../../services/settings_service.dart';
 
 class AddReminderScreen extends ConsumerStatefulWidget {
   final int vehicleId;
@@ -20,11 +21,32 @@ class _AddReminderScreenState extends ConsumerState<AddReminderScreen> {
   ReminderType _type = ReminderType.oilChange;
   DateTime _dueDate = DateTime.now().add(const Duration(days: 180));
   final _mileageCtrl = TextEditingController();
+  final _customLabelCtrl = TextEditingController();
+  final _customOffsetCtrl = TextEditingController();
+  Set<int> _offsets = {56, 28, 7};
+  bool _loaded = false;
   bool _saving = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadDefaults();
+  }
+
+  Future<void> _loadDefaults() async {
+    final offsets = await ref.read(settingsServiceProvider).getDefaultNotifyOffsets();
+    if (!mounted) return;
+    setState(() {
+      _offsets = offsets.toSet();
+      _loaded = true;
+    });
+  }
 
   @override
   void dispose() {
     _mileageCtrl.dispose();
+    _customLabelCtrl.dispose();
+    _customOffsetCtrl.dispose();
     super.dispose();
   }
 
@@ -40,43 +62,121 @@ class _AddReminderScreenState extends ConsumerState<AddReminderScreen> {
     if (picked != null) setState(() => _dueDate = picked);
   }
 
+  void _addCustomOffset() {
+    final n = int.tryParse(_customOffsetCtrl.text.trim());
+    if (n == null || n <= 0) return;
+    setState(() {
+      _offsets.add(n);
+      _customOffsetCtrl.clear();
+    });
+  }
+
+  Future<bool> _ensurePermission() async {
+    final svc = NotificationService();
+    if (await svc.hasPermission()) return true;
+    final granted = await svc.requestPermission();
+    if (granted) return true;
+    if (!mounted) return false;
+    final openSettings = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Benachrichtigungen deaktiviert'),
+        content: const Text(
+          'Ohne Benachrichtigungen können wir dich nicht an anstehende '
+          'Wartungen erinnern. In den Systemeinstellungen kannst du die '
+          'Freigabe nachträglich erteilen.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Trotzdem speichern'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Einstellungen öffnen'),
+          ),
+        ],
+      ),
+    );
+    if (openSettings == true) {
+      await svc.openSystemSettings();
+    }
+    return false;
+  }
+
   Future<void> _save() async {
+    if (_type == ReminderType.custom &&
+        _customLabelCtrl.text.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Bitte gib einen Namen für die eigene Erinnerung ein.')),
+      );
+      return;
+    }
+
     setState(() => _saving = true);
+
+    final sortedOffsets = _offsets.toList()..sort((a, b) => b.compareTo(a));
+    final hasPermission = await _ensurePermission();
+
     final repo = ref.read(remindersRepositoryProvider);
     final mileage = int.tryParse(_mileageCtrl.text);
+    final customLabel = _type == ReminderType.custom
+        ? _customLabelCtrl.text.trim()
+        : null;
 
     final id = await repo.insertReminder(
       RemindersCompanion.insert(
         vehicleId: widget.vehicleId,
         type: _type.dbValue,
+        customLabel: Value(customLabel),
         dueDate: _dueDate,
         dueMileage: Value(mileage),
+        notifyOffsetsDays: Value(SettingsService.encodeOffsets(sortedOffsets)),
         createdAt: DateTime.now(),
       ),
     );
 
-    // Schedule reminders 8w / 4w / 1w before due date.
-    final svc = NotificationService();
-    final offsets = [const Duration(days: 56), const Duration(days: 28), const Duration(days: 7)];
-    for (var i = 0; i < offsets.length; i++) {
-      final when = _dueDate.subtract(offsets[i]);
-      await svc.schedule(
-        id: id * 10 + i,
-        title: 'AutoMate · ${_type.displayName}',
-        body: i == 2
-            ? 'Noch 1 Woche bis zur Fälligkeit.'
-            : 'Noch ${offsets[i].inDays ~/ 7} Wochen bis zur Fälligkeit.',
-        when: when,
-      );
+    if (hasPermission && sortedOffsets.isNotEmpty) {
+      final svc = NotificationService();
+      final title = customLabel ?? _type.displayName;
+      for (var i = 0; i < sortedOffsets.length; i++) {
+        final days = sortedOffsets[i];
+        final when = _dueDate.subtract(Duration(days: days));
+        await svc.schedule(
+          id: id * 100 + i,
+          title: 'AutoMate · $title',
+          body: _offsetLabel(days, short: false),
+          when: when,
+        );
+      }
     }
 
     if (!mounted) return;
     context.pop();
   }
 
+  String _offsetLabel(int days, {bool short = true}) {
+    if (days == 1) return short ? '1 Tag' : 'Noch 1 Tag bis zur Fälligkeit.';
+    if (days < 7) return short ? '$days Tage' : 'Noch $days Tage bis zur Fälligkeit.';
+    if (days == 7) return short ? '1 Woche' : 'Noch 1 Woche bis zur Fälligkeit.';
+    if (days % 7 == 0) {
+      final w = days ~/ 7;
+      return short ? '$w Wochen' : 'Noch $w Wochen bis zur Fälligkeit.';
+    }
+    return short ? '$days Tage' : 'Noch $days Tage bis zur Fälligkeit.';
+  }
+
   @override
   Widget build(BuildContext context) {
+    if (!_loaded) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
     final fmt = DateFormat('dd.MM.yyyy', 'de');
+    final cs = Theme.of(context).colorScheme;
+    final sortedOffsets = _offsets.toList()..sort((a, b) => b.compareTo(a));
+    const presets = [1, 3, 7, 14, 28, 56, 90];
 
     return Scaffold(
       appBar: AppBar(title: const Text('Neue Erinnerung')),
@@ -93,6 +193,19 @@ class _AddReminderScreenState extends ConsumerState<AddReminderScreen> {
                 selected: t == _type,
                 onTap: () => setState(() => _type = t),
               )),
+          if (_type == ReminderType.custom) ...[
+            const SizedBox(height: 16),
+            TextField(
+              controller: _customLabelCtrl,
+              textCapitalization: TextCapitalization.sentences,
+              decoration: const InputDecoration(
+                labelText: 'Eigene Bezeichnung',
+                hintText: 'z.B. Pollenfilter wechseln',
+                border: OutlineInputBorder(),
+                prefixIcon: Icon(Icons.edit_note),
+              ),
+            ),
+          ],
           const SizedBox(height: 24),
           Text('Fälligkeitsdatum',
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
@@ -120,6 +233,69 @@ class _AddReminderScreenState extends ConsumerState<AddReminderScreen> {
               helperText: 'Falls die Wartung auch vom Kilometerstand abhängt',
             ),
           ),
+          const SizedBox(height: 24),
+          Text('Benachrichtigungen',
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  )),
+          Text(
+            'Wann möchtest du vor der Fälligkeit erinnert werden?',
+            style: Theme.of(context)
+                .textTheme
+                .bodySmall
+                ?.copyWith(color: cs.outline),
+          ),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            runSpacing: 4,
+            children: [
+              for (final d in {...presets, ..._offsets}.toList()
+                ..sort((a, b) => a.compareTo(b)))
+                FilterChip(
+                  label: Text(_offsetLabel(d)),
+                  selected: _offsets.contains(d),
+                  onSelected: (sel) => setState(() {
+                    if (sel) {
+                      _offsets.add(d);
+                    } else {
+                      _offsets.remove(d);
+                    }
+                  }),
+                ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: _customOffsetCtrl,
+                  keyboardType: TextInputType.number,
+                  decoration: const InputDecoration(
+                    labelText: 'Eigener Zeitpunkt',
+                    border: OutlineInputBorder(),
+                    suffixText: 'Tage',
+                    isDense: true,
+                  ),
+                  onSubmitted: (_) => _addCustomOffset(),
+                ),
+              ),
+              const SizedBox(width: 8),
+              IconButton.filledTonal(
+                onPressed: _addCustomOffset,
+                icon: const Icon(Icons.add),
+                tooltip: 'Hinzufügen',
+              ),
+            ],
+          ),
+          if (sortedOffsets.isEmpty) ...[
+            const SizedBox(height: 8),
+            Text(
+              'Keine Benachrichtigungen aktiv — die Erinnerung wird nur in der Liste angezeigt.',
+              style: TextStyle(color: cs.outline),
+            ),
+          ],
           const SizedBox(height: 32),
           SizedBox(
             width: double.infinity,

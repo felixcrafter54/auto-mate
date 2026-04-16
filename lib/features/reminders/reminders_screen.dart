@@ -68,7 +68,7 @@ class RemindersScreen extends ConsumerWidget {
       builder: (ctx) => AlertDialog(
         title: const Text('Erledigt markieren'),
         content: Text(
-          'Möchtest du die Erinnerung "${_typeLabel(reminder.type)}" '
+          'Möchtest du die Erinnerung "${_typeLabel(reminder)}" '
           'als erledigt markieren?',
         ),
         actions: [
@@ -95,10 +95,11 @@ class RemindersScreen extends ConsumerWidget {
         mileageAtCompletion: currentMileage,
       ),
     );
-    // Cancel scheduled notifications and delete reminder
+    // Cancel scheduled notifications and delete reminder.
+    // Each reminder can have up to 20 configured offsets, scheduled at id*100+i.
     final db = ref.read(databaseProvider);
-    for (final offset in [0, 1, 2]) {
-      await NotificationService().cancel(reminder.id * 10 + offset);
+    for (var i = 0; i < 20; i++) {
+      await NotificationService().cancel(reminder.id * 100 + i);
     }
     await (db.delete(db.reminders)..where((r) => r.id.equals(reminder.id))).go();
 
@@ -108,8 +109,12 @@ class RemindersScreen extends ConsumerWidget {
     );
   }
 
-  String _typeLabel(String dbValue) =>
-      ReminderType.fromString(dbValue).displayName;
+  String _typeLabel(Reminder r) {
+    if (r.customLabel != null && r.customLabel!.isNotEmpty) {
+      return r.customLabel!;
+    }
+    return ReminderType.fromString(r.type).displayName;
+  }
 }
 
 class _EmptyState extends StatelessWidget {
@@ -159,6 +164,10 @@ class _ReminderCard extends StatelessWidget {
     final daysLeft = reminder.dueDate.difference(now).inDays;
     final overdue = daysLeft < 0;
     final soon = daysLeft >= 0 && daysLeft <= 14;
+    final label = (reminder.customLabel != null &&
+            reminder.customLabel!.isNotEmpty)
+        ? reminder.customLabel!
+        : type.displayName;
 
     final statusColor = overdue
         ? cs.error
@@ -181,7 +190,7 @@ class _ReminderCard extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(type.displayName,
+                  Text(label,
                       style:
                           const TextStyle(fontWeight: FontWeight.bold)),
                   const SizedBox(height: 2),

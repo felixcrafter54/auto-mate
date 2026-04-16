@@ -38,8 +38,10 @@ class Reminders extends Table {
   IntColumn get id => integer().autoIncrement()();
   IntColumn get vehicleId => integer().references(Vehicles, #id)();
   TextColumn get type => text()(); // ReminderType.dbValue
+  TextColumn get customLabel => text().nullable()();
   DateTimeColumn get dueDate => dateTime()();
   IntColumn get dueMileage => integer().nullable()();
+  TextColumn get notifyOffsetsDays => text().nullable()(); // CSV of ints
   BoolColumn get notified => boolean().withDefault(const Constant(false))();
   DateTimeColumn get createdAt => dateTime()();
 }
@@ -94,7 +96,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 
   @override
-  int get schemaVersion => 4;
+  int get schemaVersion => 5;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -110,6 +112,10 @@ class AppDatabase extends _$AppDatabase {
           if (from < 4) {
             // Drop vehicles.skill_level — skill level is now per user.
             await customStatement('ALTER TABLE vehicles DROP COLUMN skill_level');
+          }
+          if (from < 5) {
+            await m.addColumn(reminders, reminders.customLabel);
+            await m.addColumn(reminders, reminders.notifyOffsetsDays);
           }
         },
       );

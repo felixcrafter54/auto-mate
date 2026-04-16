@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:timezone/data/latest_all.dart' as tzdata;
 import 'package:timezone/timezone.dart' as tz;
 
@@ -32,6 +33,28 @@ class NotificationService {
       ),
     );
     _initialized = true;
+  }
+
+  /// Returns true if the user has already granted notification permission.
+  Future<bool> hasPermission() async {
+    if (kIsWeb) return false;
+    final status = await Permission.notification.status;
+    return status.isGranted;
+  }
+
+  /// Requests notification permission. Returns true if granted.
+  /// Shows the native OS dialog on Android 13+ and iOS.
+  Future<bool> requestPermission() async {
+    if (kIsWeb) return false;
+    final status = await Permission.notification.request();
+    return status.isGranted;
+  }
+
+  /// Opens the app's system settings page so the user can grant permission
+  /// after previously denying it.
+  Future<void> openSystemSettings() async {
+    if (kIsWeb) return;
+    await openAppSettings();
   }
 
   Future<void> schedule({

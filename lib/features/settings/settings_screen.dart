@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../../services/notification_service.dart';
 import '../../services/settings_service.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
@@ -14,7 +15,10 @@ class SettingsScreen extends ConsumerStatefulWidget {
 class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   final _claudeCtrl = TextEditingController();
   final _youtubeCtrl = TextEditingController();
+  final _customOffsetCtrl = TextEditingController();
   String _language = 'de';
+  Set<int> _notifyOffsets = {56, 28, 7};
+  bool _notifyPermissionGranted = false;
   bool _loading = true;
   bool _revealClaude = false;
   bool _revealYoutube = false;
@@ -30,11 +34,15 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     final claude = await svc.getClaudeKey();
     final yt = await svc.getYoutubeKey();
     final lang = await svc.getReportLanguage();
+    final offsets = await svc.getDefaultNotifyOffsets();
+    final permGranted = await NotificationService().hasPermission();
     if (!mounted) return;
     setState(() {
       _claudeCtrl.text = claude ?? '';
       _youtubeCtrl.text = yt ?? '';
       _language = lang;
+      _notifyOffsets = offsets.toSet();
+      _notifyPermissionGranted = permGranted;
       _loading = false;
     });
   }
@@ -44,19 +52,57 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     await svc.set(kSettingClaudeApiKey, _claudeCtrl.text.trim());
     await svc.set(kSettingYoutubeApiKey, _youtubeCtrl.text.trim());
     await svc.set(kSettingReportLanguage, _language);
+    await svc.setDefaultNotifyOffsets(_notifyOffsets.toList());
     ref.invalidate(claudeKeyProvider);
     ref.invalidate(youtubeKeyProvider);
     ref.invalidate(reportLanguageProvider);
+    ref.invalidate(defaultNotifyOffsetsProvider);
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Einstellungen gespeichert')),
     );
   }
 
+  Future<void> _requestNotifyPermission() async {
+    final granted = await NotificationService().requestPermission();
+    if (!mounted) return;
+    setState(() => _notifyPermissionGranted = granted);
+    if (!granted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text(
+              'Berechtigung abgelehnt. Öffne die Systemeinstellungen, um sie zu erlauben.'),
+          action: SnackBarAction(
+            label: 'Einstellungen',
+            onPressed: () => NotificationService().openSystemSettings(),
+          ),
+        ),
+      );
+    }
+  }
+
+  void _addCustomOffset() {
+    final n = int.tryParse(_customOffsetCtrl.text.trim());
+    if (n == null || n <= 0) return;
+    setState(() {
+      _notifyOffsets.add(n);
+      _customOffsetCtrl.clear();
+    });
+  }
+
+  String _offsetLabel(int days) {
+    if (days == 1) return '1 Tag';
+    if (days < 7) return '$days Tage';
+    if (days == 7) return '1 Woche';
+    if (days % 7 == 0) return '${days ~/ 7} Wochen';
+    return '$days Tage';
+  }
+
   @override
   void dispose() {
     _claudeCtrl.dispose();
     _youtubeCtrl.dispose();
+    _customOffsetCtrl.dispose();
     super.dispose();
   }
 
@@ -133,6 +179,90 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             icon: const Icon(Icons.open_in_new, size: 16),
             label: const Text('Key bei Google Cloud anlegen'),
             onPressed: () => _open('https://console.cloud.google.com/apis/credentials'),
+          ),
+          const SizedBox(height: 28),
+
+          _SectionTitle('Benachrichtigungen'),
+          const SizedBox(height: 8),
+          if (!kIsWeb) ...[
+            Card(
+              color: _notifyPermissionGranted
+                  ? cs.primaryContainer.withValues(alpha: 0.35)
+                  : cs.errorContainer.withValues(alpha: 0.35),
+              child: ListTile(
+                leading: Icon(
+                  _notifyPermissionGranted
+                      ? Icons.notifications_active
+                      : Icons.notifications_off,
+                  color: _notifyPermissionGranted ? cs.primary : cs.error,
+                ),
+                title: Text(_notifyPermissionGranted
+                    ? 'Benachrichtigungen sind aktiv'
+                    : 'Benachrichtigungen sind deaktiviert'),
+                subtitle: Text(_notifyPermissionGranted
+                    ? 'Du bekommst Erinnerungen zu fälligen Wartungen.'
+                    : 'Ohne Berechtigung kann AutoMate dich nicht erinnern.'),
+                trailing: _notifyPermissionGranted
+                    ? null
+                    : FilledButton(
+                        onPressed: _requestNotifyPermission,
+                        child: const Text('Erlauben'),
+                      ),
+              ),
+            ),
+            const SizedBox(height: 12),
+          ],
+          Text(
+            'Standard-Erinnerungszeitpunkte vor Fälligkeit. Lässt sich pro Erinnerung überschreiben.',
+            style: Theme.of(context)
+                .textTheme
+                .bodySmall
+                ?.copyWith(color: cs.outline),
+          ),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            runSpacing: 4,
+            children: [
+              for (final d in {...const [1, 3, 7, 14, 28, 56, 90], ..._notifyOffsets}
+                  .toList()
+                ..sort((a, b) => a.compareTo(b)))
+                FilterChip(
+                  label: Text(_offsetLabel(d)),
+                  selected: _notifyOffsets.contains(d),
+                  onSelected: (sel) => setState(() {
+                    if (sel) {
+                      _notifyOffsets.add(d);
+                    } else {
+                      _notifyOffsets.remove(d);
+                    }
+                  }),
+                ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: _customOffsetCtrl,
+                  keyboardType: TextInputType.number,
+                  decoration: const InputDecoration(
+                    labelText: 'Eigener Zeitpunkt',
+                    border: OutlineInputBorder(),
+                    suffixText: 'Tage',
+                    isDense: true,
+                  ),
+                  onSubmitted: (_) => _addCustomOffset(),
+                ),
+              ),
+              const SizedBox(width: 8),
+              IconButton.filledTonal(
+                onPressed: _addCustomOffset,
+                icon: const Icon(Icons.add),
+                tooltip: 'Hinzufügen',
+              ),
+            ],
           ),
           const SizedBox(height: 28),
 

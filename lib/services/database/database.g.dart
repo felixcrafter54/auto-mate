@@ -1097,6 +1097,17 @@ class $RemindersTable extends Reminders
     type: DriftSqlType.string,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _customLabelMeta = const VerificationMeta(
+    'customLabel',
+  );
+  @override
+  late final GeneratedColumn<String> customLabel = GeneratedColumn<String>(
+    'custom_label',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _dueDateMeta = const VerificationMeta(
     'dueDate',
   );
@@ -1119,6 +1130,18 @@ class $RemindersTable extends Reminders
     type: DriftSqlType.int,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _notifyOffsetsDaysMeta = const VerificationMeta(
+    'notifyOffsetsDays',
+  );
+  @override
+  late final GeneratedColumn<String> notifyOffsetsDays =
+      GeneratedColumn<String>(
+        'notify_offsets_days',
+        aliasedName,
+        true,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+      );
   static const VerificationMeta _notifiedMeta = const VerificationMeta(
     'notified',
   );
@@ -1150,8 +1173,10 @@ class $RemindersTable extends Reminders
     id,
     vehicleId,
     type,
+    customLabel,
     dueDate,
     dueMileage,
+    notifyOffsetsDays,
     notified,
     createdAt,
   ];
@@ -1186,6 +1211,15 @@ class $RemindersTable extends Reminders
     } else if (isInserting) {
       context.missing(_typeMeta);
     }
+    if (data.containsKey('custom_label')) {
+      context.handle(
+        _customLabelMeta,
+        customLabel.isAcceptableOrUnknown(
+          data['custom_label']!,
+          _customLabelMeta,
+        ),
+      );
+    }
     if (data.containsKey('due_date')) {
       context.handle(
         _dueDateMeta,
@@ -1198,6 +1232,15 @@ class $RemindersTable extends Reminders
       context.handle(
         _dueMileageMeta,
         dueMileage.isAcceptableOrUnknown(data['due_mileage']!, _dueMileageMeta),
+      );
+    }
+    if (data.containsKey('notify_offsets_days')) {
+      context.handle(
+        _notifyOffsetsDaysMeta,
+        notifyOffsetsDays.isAcceptableOrUnknown(
+          data['notify_offsets_days']!,
+          _notifyOffsetsDaysMeta,
+        ),
       );
     }
     if (data.containsKey('notified')) {
@@ -1235,6 +1278,10 @@ class $RemindersTable extends Reminders
         DriftSqlType.string,
         data['${effectivePrefix}type'],
       )!,
+      customLabel: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}custom_label'],
+      ),
       dueDate: attachedDatabase.typeMapping.read(
         DriftSqlType.dateTime,
         data['${effectivePrefix}due_date'],
@@ -1242,6 +1289,10 @@ class $RemindersTable extends Reminders
       dueMileage: attachedDatabase.typeMapping.read(
         DriftSqlType.int,
         data['${effectivePrefix}due_mileage'],
+      ),
+      notifyOffsetsDays: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}notify_offsets_days'],
       ),
       notified: attachedDatabase.typeMapping.read(
         DriftSqlType.bool,
@@ -1264,16 +1315,20 @@ class Reminder extends DataClass implements Insertable<Reminder> {
   final int id;
   final int vehicleId;
   final String type;
+  final String? customLabel;
   final DateTime dueDate;
   final int? dueMileage;
+  final String? notifyOffsetsDays;
   final bool notified;
   final DateTime createdAt;
   const Reminder({
     required this.id,
     required this.vehicleId,
     required this.type,
+    this.customLabel,
     required this.dueDate,
     this.dueMileage,
+    this.notifyOffsetsDays,
     required this.notified,
     required this.createdAt,
   });
@@ -1283,9 +1338,15 @@ class Reminder extends DataClass implements Insertable<Reminder> {
     map['id'] = Variable<int>(id);
     map['vehicle_id'] = Variable<int>(vehicleId);
     map['type'] = Variable<String>(type);
+    if (!nullToAbsent || customLabel != null) {
+      map['custom_label'] = Variable<String>(customLabel);
+    }
     map['due_date'] = Variable<DateTime>(dueDate);
     if (!nullToAbsent || dueMileage != null) {
       map['due_mileage'] = Variable<int>(dueMileage);
+    }
+    if (!nullToAbsent || notifyOffsetsDays != null) {
+      map['notify_offsets_days'] = Variable<String>(notifyOffsetsDays);
     }
     map['notified'] = Variable<bool>(notified);
     map['created_at'] = Variable<DateTime>(createdAt);
@@ -1297,10 +1358,16 @@ class Reminder extends DataClass implements Insertable<Reminder> {
       id: Value(id),
       vehicleId: Value(vehicleId),
       type: Value(type),
+      customLabel: customLabel == null && nullToAbsent
+          ? const Value.absent()
+          : Value(customLabel),
       dueDate: Value(dueDate),
       dueMileage: dueMileage == null && nullToAbsent
           ? const Value.absent()
           : Value(dueMileage),
+      notifyOffsetsDays: notifyOffsetsDays == null && nullToAbsent
+          ? const Value.absent()
+          : Value(notifyOffsetsDays),
       notified: Value(notified),
       createdAt: Value(createdAt),
     );
@@ -1315,8 +1382,12 @@ class Reminder extends DataClass implements Insertable<Reminder> {
       id: serializer.fromJson<int>(json['id']),
       vehicleId: serializer.fromJson<int>(json['vehicleId']),
       type: serializer.fromJson<String>(json['type']),
+      customLabel: serializer.fromJson<String?>(json['customLabel']),
       dueDate: serializer.fromJson<DateTime>(json['dueDate']),
       dueMileage: serializer.fromJson<int?>(json['dueMileage']),
+      notifyOffsetsDays: serializer.fromJson<String?>(
+        json['notifyOffsetsDays'],
+      ),
       notified: serializer.fromJson<bool>(json['notified']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
     );
@@ -1328,8 +1399,10 @@ class Reminder extends DataClass implements Insertable<Reminder> {
       'id': serializer.toJson<int>(id),
       'vehicleId': serializer.toJson<int>(vehicleId),
       'type': serializer.toJson<String>(type),
+      'customLabel': serializer.toJson<String?>(customLabel),
       'dueDate': serializer.toJson<DateTime>(dueDate),
       'dueMileage': serializer.toJson<int?>(dueMileage),
+      'notifyOffsetsDays': serializer.toJson<String?>(notifyOffsetsDays),
       'notified': serializer.toJson<bool>(notified),
       'createdAt': serializer.toJson<DateTime>(createdAt),
     };
@@ -1339,16 +1412,22 @@ class Reminder extends DataClass implements Insertable<Reminder> {
     int? id,
     int? vehicleId,
     String? type,
+    Value<String?> customLabel = const Value.absent(),
     DateTime? dueDate,
     Value<int?> dueMileage = const Value.absent(),
+    Value<String?> notifyOffsetsDays = const Value.absent(),
     bool? notified,
     DateTime? createdAt,
   }) => Reminder(
     id: id ?? this.id,
     vehicleId: vehicleId ?? this.vehicleId,
     type: type ?? this.type,
+    customLabel: customLabel.present ? customLabel.value : this.customLabel,
     dueDate: dueDate ?? this.dueDate,
     dueMileage: dueMileage.present ? dueMileage.value : this.dueMileage,
+    notifyOffsetsDays: notifyOffsetsDays.present
+        ? notifyOffsetsDays.value
+        : this.notifyOffsetsDays,
     notified: notified ?? this.notified,
     createdAt: createdAt ?? this.createdAt,
   );
@@ -1357,10 +1436,16 @@ class Reminder extends DataClass implements Insertable<Reminder> {
       id: data.id.present ? data.id.value : this.id,
       vehicleId: data.vehicleId.present ? data.vehicleId.value : this.vehicleId,
       type: data.type.present ? data.type.value : this.type,
+      customLabel: data.customLabel.present
+          ? data.customLabel.value
+          : this.customLabel,
       dueDate: data.dueDate.present ? data.dueDate.value : this.dueDate,
       dueMileage: data.dueMileage.present
           ? data.dueMileage.value
           : this.dueMileage,
+      notifyOffsetsDays: data.notifyOffsetsDays.present
+          ? data.notifyOffsetsDays.value
+          : this.notifyOffsetsDays,
       notified: data.notified.present ? data.notified.value : this.notified,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
     );
@@ -1372,8 +1457,10 @@ class Reminder extends DataClass implements Insertable<Reminder> {
           ..write('id: $id, ')
           ..write('vehicleId: $vehicleId, ')
           ..write('type: $type, ')
+          ..write('customLabel: $customLabel, ')
           ..write('dueDate: $dueDate, ')
           ..write('dueMileage: $dueMileage, ')
+          ..write('notifyOffsetsDays: $notifyOffsetsDays, ')
           ..write('notified: $notified, ')
           ..write('createdAt: $createdAt')
           ..write(')'))
@@ -1385,8 +1472,10 @@ class Reminder extends DataClass implements Insertable<Reminder> {
     id,
     vehicleId,
     type,
+    customLabel,
     dueDate,
     dueMileage,
+    notifyOffsetsDays,
     notified,
     createdAt,
   );
@@ -1397,8 +1486,10 @@ class Reminder extends DataClass implements Insertable<Reminder> {
           other.id == this.id &&
           other.vehicleId == this.vehicleId &&
           other.type == this.type &&
+          other.customLabel == this.customLabel &&
           other.dueDate == this.dueDate &&
           other.dueMileage == this.dueMileage &&
+          other.notifyOffsetsDays == this.notifyOffsetsDays &&
           other.notified == this.notified &&
           other.createdAt == this.createdAt);
 }
@@ -1407,16 +1498,20 @@ class RemindersCompanion extends UpdateCompanion<Reminder> {
   final Value<int> id;
   final Value<int> vehicleId;
   final Value<String> type;
+  final Value<String?> customLabel;
   final Value<DateTime> dueDate;
   final Value<int?> dueMileage;
+  final Value<String?> notifyOffsetsDays;
   final Value<bool> notified;
   final Value<DateTime> createdAt;
   const RemindersCompanion({
     this.id = const Value.absent(),
     this.vehicleId = const Value.absent(),
     this.type = const Value.absent(),
+    this.customLabel = const Value.absent(),
     this.dueDate = const Value.absent(),
     this.dueMileage = const Value.absent(),
+    this.notifyOffsetsDays = const Value.absent(),
     this.notified = const Value.absent(),
     this.createdAt = const Value.absent(),
   });
@@ -1424,8 +1519,10 @@ class RemindersCompanion extends UpdateCompanion<Reminder> {
     this.id = const Value.absent(),
     required int vehicleId,
     required String type,
+    this.customLabel = const Value.absent(),
     required DateTime dueDate,
     this.dueMileage = const Value.absent(),
+    this.notifyOffsetsDays = const Value.absent(),
     this.notified = const Value.absent(),
     required DateTime createdAt,
   }) : vehicleId = Value(vehicleId),
@@ -1436,8 +1533,10 @@ class RemindersCompanion extends UpdateCompanion<Reminder> {
     Expression<int>? id,
     Expression<int>? vehicleId,
     Expression<String>? type,
+    Expression<String>? customLabel,
     Expression<DateTime>? dueDate,
     Expression<int>? dueMileage,
+    Expression<String>? notifyOffsetsDays,
     Expression<bool>? notified,
     Expression<DateTime>? createdAt,
   }) {
@@ -1445,8 +1544,10 @@ class RemindersCompanion extends UpdateCompanion<Reminder> {
       if (id != null) 'id': id,
       if (vehicleId != null) 'vehicle_id': vehicleId,
       if (type != null) 'type': type,
+      if (customLabel != null) 'custom_label': customLabel,
       if (dueDate != null) 'due_date': dueDate,
       if (dueMileage != null) 'due_mileage': dueMileage,
+      if (notifyOffsetsDays != null) 'notify_offsets_days': notifyOffsetsDays,
       if (notified != null) 'notified': notified,
       if (createdAt != null) 'created_at': createdAt,
     });
@@ -1456,8 +1557,10 @@ class RemindersCompanion extends UpdateCompanion<Reminder> {
     Value<int>? id,
     Value<int>? vehicleId,
     Value<String>? type,
+    Value<String?>? customLabel,
     Value<DateTime>? dueDate,
     Value<int?>? dueMileage,
+    Value<String?>? notifyOffsetsDays,
     Value<bool>? notified,
     Value<DateTime>? createdAt,
   }) {
@@ -1465,8 +1568,10 @@ class RemindersCompanion extends UpdateCompanion<Reminder> {
       id: id ?? this.id,
       vehicleId: vehicleId ?? this.vehicleId,
       type: type ?? this.type,
+      customLabel: customLabel ?? this.customLabel,
       dueDate: dueDate ?? this.dueDate,
       dueMileage: dueMileage ?? this.dueMileage,
+      notifyOffsetsDays: notifyOffsetsDays ?? this.notifyOffsetsDays,
       notified: notified ?? this.notified,
       createdAt: createdAt ?? this.createdAt,
     );
@@ -1484,11 +1589,17 @@ class RemindersCompanion extends UpdateCompanion<Reminder> {
     if (type.present) {
       map['type'] = Variable<String>(type.value);
     }
+    if (customLabel.present) {
+      map['custom_label'] = Variable<String>(customLabel.value);
+    }
     if (dueDate.present) {
       map['due_date'] = Variable<DateTime>(dueDate.value);
     }
     if (dueMileage.present) {
       map['due_mileage'] = Variable<int>(dueMileage.value);
+    }
+    if (notifyOffsetsDays.present) {
+      map['notify_offsets_days'] = Variable<String>(notifyOffsetsDays.value);
     }
     if (notified.present) {
       map['notified'] = Variable<bool>(notified.value);
@@ -1505,8 +1616,10 @@ class RemindersCompanion extends UpdateCompanion<Reminder> {
           ..write('id: $id, ')
           ..write('vehicleId: $vehicleId, ')
           ..write('type: $type, ')
+          ..write('customLabel: $customLabel, ')
           ..write('dueDate: $dueDate, ')
           ..write('dueMileage: $dueMileage, ')
+          ..write('notifyOffsetsDays: $notifyOffsetsDays, ')
           ..write('notified: $notified, ')
           ..write('createdAt: $createdAt')
           ..write(')'))
@@ -3900,8 +4013,10 @@ typedef $$RemindersTableCreateCompanionBuilder =
       Value<int> id,
       required int vehicleId,
       required String type,
+      Value<String?> customLabel,
       required DateTime dueDate,
       Value<int?> dueMileage,
+      Value<String?> notifyOffsetsDays,
       Value<bool> notified,
       required DateTime createdAt,
     });
@@ -3910,8 +4025,10 @@ typedef $$RemindersTableUpdateCompanionBuilder =
       Value<int> id,
       Value<int> vehicleId,
       Value<String> type,
+      Value<String?> customLabel,
       Value<DateTime> dueDate,
       Value<int?> dueMileage,
+      Value<String?> notifyOffsetsDays,
       Value<bool> notified,
       Value<DateTime> createdAt,
     });
@@ -3959,6 +4076,11 @@ class $$RemindersTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
+  ColumnFilters<String> get customLabel => $composableBuilder(
+    column: $table.customLabel,
+    builder: (column) => ColumnFilters(column),
+  );
+
   ColumnFilters<DateTime> get dueDate => $composableBuilder(
     column: $table.dueDate,
     builder: (column) => ColumnFilters(column),
@@ -3966,6 +4088,11 @@ class $$RemindersTableFilterComposer
 
   ColumnFilters<int> get dueMileage => $composableBuilder(
     column: $table.dueMileage,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get notifyOffsetsDays => $composableBuilder(
+    column: $table.notifyOffsetsDays,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -4022,6 +4149,11 @@ class $$RemindersTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get customLabel => $composableBuilder(
+    column: $table.customLabel,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<DateTime> get dueDate => $composableBuilder(
     column: $table.dueDate,
     builder: (column) => ColumnOrderings(column),
@@ -4029,6 +4161,11 @@ class $$RemindersTableOrderingComposer
 
   ColumnOrderings<int> get dueMileage => $composableBuilder(
     column: $table.dueMileage,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get notifyOffsetsDays => $composableBuilder(
+    column: $table.notifyOffsetsDays,
     builder: (column) => ColumnOrderings(column),
   );
 
@@ -4081,11 +4218,21 @@ class $$RemindersTableAnnotationComposer
   GeneratedColumn<String> get type =>
       $composableBuilder(column: $table.type, builder: (column) => column);
 
+  GeneratedColumn<String> get customLabel => $composableBuilder(
+    column: $table.customLabel,
+    builder: (column) => column,
+  );
+
   GeneratedColumn<DateTime> get dueDate =>
       $composableBuilder(column: $table.dueDate, builder: (column) => column);
 
   GeneratedColumn<int> get dueMileage => $composableBuilder(
     column: $table.dueMileage,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get notifyOffsetsDays => $composableBuilder(
+    column: $table.notifyOffsetsDays,
     builder: (column) => column,
   );
 
@@ -4150,16 +4297,20 @@ class $$RemindersTableTableManager
                 Value<int> id = const Value.absent(),
                 Value<int> vehicleId = const Value.absent(),
                 Value<String> type = const Value.absent(),
+                Value<String?> customLabel = const Value.absent(),
                 Value<DateTime> dueDate = const Value.absent(),
                 Value<int?> dueMileage = const Value.absent(),
+                Value<String?> notifyOffsetsDays = const Value.absent(),
                 Value<bool> notified = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
               }) => RemindersCompanion(
                 id: id,
                 vehicleId: vehicleId,
                 type: type,
+                customLabel: customLabel,
                 dueDate: dueDate,
                 dueMileage: dueMileage,
+                notifyOffsetsDays: notifyOffsetsDays,
                 notified: notified,
                 createdAt: createdAt,
               ),
@@ -4168,16 +4319,20 @@ class $$RemindersTableTableManager
                 Value<int> id = const Value.absent(),
                 required int vehicleId,
                 required String type,
+                Value<String?> customLabel = const Value.absent(),
                 required DateTime dueDate,
                 Value<int?> dueMileage = const Value.absent(),
+                Value<String?> notifyOffsetsDays = const Value.absent(),
                 Value<bool> notified = const Value.absent(),
                 required DateTime createdAt,
               }) => RemindersCompanion.insert(
                 id: id,
                 vehicleId: vehicleId,
                 type: type,
+                customLabel: customLabel,
                 dueDate: dueDate,
                 dueMileage: dueMileage,
+                notifyOffsetsDays: notifyOffsetsDays,
                 notified: notified,
                 createdAt: createdAt,
               ),
