@@ -1,0 +1,243 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:pdf/pdf.dart';
+import 'package:pdf/widgets.dart' as pw;
+import 'package:printing/printing.dart';
+import '../../core/providers/database_provider.dart';
+import '../../services/claude_service.dart';
+import '../../services/database/database.dart';
+import '../../services/models/enums.dart';
+import '../../services/settings_service.dart';
+
+final _vehicleProvider = FutureProvider.family<Vehicle?, int>(
+  (ref, id) => ref.read(vehiclesRepositoryProvider).getVehicleById(id),
+);
+
+class WorkshopReportScreen extends ConsumerStatefulWidget {
+  final int vehicleId;
+  const WorkshopReportScreen({super.key, required this.vehicleId});
+
+  @override
+  ConsumerState<WorkshopReportScreen> createState() =>
+      _WorkshopReportScreenState();
+}
+
+class _WorkshopReportScreenState extends ConsumerState<WorkshopReportScreen> {
+  final _symptomCtrl = TextEditingController();
+  String? _report;
+  bool _loading = false;
+  String? _error;
+
+  @override
+  void dispose() {
+    _symptomCtrl.dispose();
+    super.dispose();
+  }
+
+  Future<void> _generate(Vehicle vehicle) async {
+    if (_symptomCtrl.text.trim().isEmpty) return;
+    setState(() {
+      _loading = true;
+      _error = null;
+      _report = null;
+    });
+
+    try {
+      final language = await ref.read(settingsServiceProvider).getReportLanguage();
+      final service = ref.read(claudeServiceProvider);
+      final systemPrompt = service.buildWorkshopReportPrompt(
+        make: vehicle.make,
+        model: vehicle.model,
+        year: vehicle.year,
+        fuelType: FuelType.fromString(vehicle.fuelType),
+        language: language,
+      );
+
+      final report = await service.complete(
+        systemPrompt: systemPrompt,
+        messages: [
+          ClaudeMessage(
+            role: 'user',
+            content: _symptomCtrl.text.trim(),
+          ),
+        ],
+        maxTokens: 1500,
+      );
+
+      if (!mounted) return;
+      setState(() {
+        _report = report;
+        _loading = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _error = e.toString();
+        _loading = false;
+      });
+    }
+  }
+
+  Future<void> _share(Vehicle vehicle) async {
+    if (_report == null) return;
+    final doc = pw.Document();
+    final vehicleLine = '${vehicle.year} ${vehicle.make} ${vehicle.model}';
+    doc.addPage(
+      pw.MultiPage(
+        pageFormat: PdfPageFormat.a4,
+        margin: const pw.EdgeInsets.all(36),
+        build: (context) => [
+          pw.Text('AutoMate — Werkstattbericht',
+              style: pw.TextStyle(fontSize: 22, fontWeight: pw.FontWeight.bold)),
+          pw.SizedBox(height: 4),
+          pw.Text(vehicleLine,
+              style: const pw.TextStyle(fontSize: 14, color: PdfColors.grey700)),
+          pw.Divider(),
+          pw.SizedBox(height: 10),
+          pw.Text('Beobachtete Symptome:',
+              style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
+          pw.SizedBox(height: 4),
+          pw.Text(_symptomCtrl.text.trim()),
+          pw.SizedBox(height: 14),
+          pw.Text('Analyse:',
+              style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
+          pw.SizedBox(height: 4),
+          pw.Text(_report!),
+          pw.SizedBox(height: 20),
+          pw.Text(
+            'Erstellt mit AutoMate · KI-Analyse zur Orientierung · '
+            'Ersetzt keine professionelle Diagnose.',
+            style: const pw.TextStyle(fontSize: 9, color: PdfColors.grey600),
+          ),
+        ],
+      ),
+    );
+    await Printing.sharePdf(
+      bytes: await doc.save(),
+      filename: 'werkstattbericht_${vehicle.make}_${vehicle.model}.pdf',
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final vehicleAsync = ref.watch(_vehicleProvider(widget.vehicleId));
+
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Werkstattbericht'),
+        actions: [
+          if (_report != null)
+            IconButton(
+              icon: const Icon(Icons.picture_as_pdf),
+              tooltip: 'Als PDF teilen',
+              onPressed: () {
+                final v = vehicleAsync.valueOrNull;
+                if (v != null) _share(v);
+              },
+            ),
+        ],
+      ),
+      body: vehicleAsync.when(
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (e, _) => Center(child: Text('Fehler: $e')),
+        data: (vehicle) {
+          if (vehicle == null) return const Center(child: Text('Kein Fahrzeug'));
+          return ListView(
+            padding: const EdgeInsets.all(20),
+            children: [
+              Card(
+                color: Theme.of(context).colorScheme.primaryContainer,
+                child: Padding(
+                  padding: const EdgeInsets.all(14),
+                  child: Row(
+                    children: [
+                      Icon(Icons.description,
+                          color: Theme.of(context)
+                              .colorScheme
+                              .onPrimaryContainer),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          'Beschreibe kurz das Problem — die KI erstellt einen '
+                          'strukturierten Bericht, den du dem Mechaniker geben kannst.',
+                          style: TextStyle(
+                            color: Theme.of(context)
+                                .colorScheme
+                                .onPrimaryContainer,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: _symptomCtrl,
+                minLines: 3,
+                maxLines: 8,
+                decoration: const InputDecoration(
+                  labelText: 'Symptome',
+                  hintText:
+                      'z. B. "Seit gestern ruckelt der Motor bei 60 km/h, '
+                      'Motorkontrollleuchte blinkt gelb, Geruch nach Benzin."',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              const SizedBox(height: 12),
+              SizedBox(
+                width: double.infinity,
+                child: FilledButton.icon(
+                  icon: _loading
+                      ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(
+                              strokeWidth: 2, color: Colors.white),
+                        )
+                      : const Icon(Icons.auto_awesome),
+                  label: Text(_loading ? 'Analysiere ...' : 'Bericht erstellen'),
+                  onPressed: _loading ? null : () => _generate(vehicle),
+                ),
+              ),
+              if (_error != null) ...[
+                const SizedBox(height: 16),
+                Card(
+                  color: Theme.of(context).colorScheme.errorContainer,
+                  child: Padding(
+                    padding: const EdgeInsets.all(12),
+                    child: Text(
+                      _error!,
+                      style: TextStyle(
+                          color: Theme.of(context).colorScheme.onErrorContainer),
+                    ),
+                  ),
+                ),
+              ],
+              if (_report != null) ...[
+                const SizedBox(height: 24),
+                Text('Analyse',
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        )),
+                const SizedBox(height: 8),
+                Card(
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: SelectableText(_report!),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                FilledButton.tonalIcon(
+                  icon: const Icon(Icons.picture_as_pdf),
+                  label: const Text('Als PDF teilen'),
+                  onPressed: () => _share(vehicle),
+                ),
+              ],
+            ],
+          );
+        },
+      ),
+    );
+  }
+}

@@ -1,0 +1,28 @@
+# Flutter/Dart
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+build/
+
+# IDE
+.idea/
+.vscode/
+*.iml
+
+# macOS
+.DS_Store
+
+# Pub
+.pub-cache/
+.pub/
+pubspec.lock
+
+# Local DB (user data)
+*.db
+*.sqlite
+
+# Credentials
+*.env
+.env
+secrets.dart
