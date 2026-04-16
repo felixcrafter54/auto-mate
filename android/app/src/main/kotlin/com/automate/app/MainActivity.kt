@@ -1,4 +1,4 @@
-package com.example.auto_mate
+package com.automate.app
 
 import io.flutter.embedding.android.FlutterActivity
 
