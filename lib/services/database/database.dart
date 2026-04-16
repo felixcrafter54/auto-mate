@@ -1,7 +1,5 @@
 import 'package:drift/drift.dart';
-import 'package:drift/web.dart';
 import 'package:drift_flutter/drift_flutter.dart';
-import 'package:flutter/foundation.dart';
 
 part 'database.g.dart';
 
@@ -117,9 +115,6 @@ class AppDatabase extends _$AppDatabase {
       );
 
   static QueryExecutor _openConnection() {
-    if (kIsWeb) {
-      return WebDatabase('automate_db');
-    }
     return driftDatabase(name: 'automate_db');
   }
 
