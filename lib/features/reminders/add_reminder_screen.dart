@@ -19,7 +19,7 @@ class AddReminderScreen extends ConsumerStatefulWidget {
 
 class _AddReminderScreenState extends ConsumerState<AddReminderScreen> {
   ReminderType _type = ReminderType.oilChange;
-  DateTime _dueDate = DateTime.now().add(const Duration(days: 180));
+  DateTime _dueDate = DateTime.now();
   final _mileageCtrl = TextEditingController();
   final _customLabelCtrl = TextEditingController();
   final _customOffsetCtrl = TextEditingController();

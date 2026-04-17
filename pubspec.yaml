@@ -85,6 +85,7 @@ dependencies:
 
   # Launch tel:, mailto:, urls
   url_launcher: ^6.3.0
+  geolocator: ^14.0.2
 
 dev_dependencies:
   flutter_test:

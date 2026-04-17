@@ -50,6 +50,7 @@ class RemindersScreen extends ConsumerWidget {
               reminder: sorted[i],
               currentMileage: currentMileage,
               onDone: () => _markDone(context, ref, sorted[i], currentMileage),
+              onDelete: () => _delete(context, ref, sorted[i]),
             ),
           );
         },
@@ -86,26 +87,80 @@ class RemindersScreen extends ConsumerWidget {
 
     if (confirmed != true) return;
 
-    final historyRepo = ref.read(maintenanceHistoryRepositoryProvider);
-    await historyRepo.insertMaintenanceHistory(
-      MaintenanceHistoryTableCompanion.insert(
-        vehicleId: reminder.vehicleId,
-        type: reminder.type,
-        completedDate: DateTime.now(),
-        mileageAtCompletion: currentMileage,
-      ),
-    );
-    // Cancel scheduled notifications and delete reminder.
-    // Each reminder can have up to 20 configured offsets, scheduled at id*100+i.
     final db = ref.read(databaseProvider);
+
+    // Delete first — if the reminder row is gone we know the user can't
+    // double-tap and end up with duplicate history entries.
+    final deleted =
+        await (db.delete(db.reminders)..where((r) => r.id.equals(reminder.id)))
+            .go();
+    if (deleted == 0) return; // already handled elsewhere
+
+    // Best-effort cancel of any scheduled alarms (up to 20 offsets per reminder).
     for (var i = 0; i < 20; i++) {
       await NotificationService().cancel(reminder.id * 100 + i);
     }
-    await (db.delete(db.reminders)..where((r) => r.id.equals(reminder.id))).go();
+
+    await ref.read(maintenanceHistoryRepositoryProvider).insertMaintenanceHistory(
+          MaintenanceHistoryTableCompanion.insert(
+            vehicleId: reminder.vehicleId,
+            type: reminder.type,
+            completedDate: DateTime.now(),
+            mileageAtCompletion: currentMileage,
+          ),
+        );
 
     if (!context.mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Als erledigt markiert')),
+    );
+  }
+
+  Future<void> _delete(
+    BuildContext context,
+    WidgetRef ref,
+    Reminder reminder,
+  ) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Erinnerung löschen?'),
+        content: Text(
+          'Die Erinnerung "${_typeLabel(reminder)}" und alle zugehörigen '
+          'Benachrichtigungen werden entfernt.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Abbrechen'),
+          ),
+          FilledButton.tonal(
+            style: FilledButton.styleFrom(
+              foregroundColor: Theme.of(ctx).colorScheme.onErrorContainer,
+              backgroundColor: Theme.of(ctx).colorScheme.errorContainer,
+            ),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Löschen'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true) return;
+
+    final db = ref.read(databaseProvider);
+    final deleted =
+        await (db.delete(db.reminders)..where((r) => r.id.equals(reminder.id)))
+            .go();
+    if (deleted == 0) return;
+
+    for (var i = 0; i < 20; i++) {
+      await NotificationService().cancel(reminder.id * 100 + i);
+    }
+
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Erinnerung gelöscht')),
     );
   }
 
@@ -149,11 +204,13 @@ class _ReminderCard extends StatelessWidget {
   final Reminder reminder;
   final int currentMileage;
   final VoidCallback onDone;
+  final VoidCallback onDelete;
 
   const _ReminderCard({
     required this.reminder,
     required this.currentMileage,
     required this.onDone,
+    required this.onDelete,
   });
 
   @override
@@ -161,7 +218,11 @@ class _ReminderCard extends StatelessWidget {
     final cs = Theme.of(context).colorScheme;
     final type = ReminderType.fromString(reminder.type);
     final now = DateTime.now();
-    final daysLeft = reminder.dueDate.difference(now).inDays;
+    // Calendar-day difference (ignore time-of-day).
+    final today = DateTime(now.year, now.month, now.day);
+    final due =
+        DateTime(reminder.dueDate.year, reminder.dueDate.month, reminder.dueDate.day);
+    final daysLeft = due.difference(today).inDays;
     final overdue = daysLeft < 0;
     final soon = daysLeft >= 0 && daysLeft <= 14;
     final label = (reminder.customLabel != null &&
@@ -215,6 +276,11 @@ class _ReminderCard extends StatelessWidget {
               icon: const Icon(Icons.check_circle_outline),
               tooltip: 'Erledigt',
               onPressed: onDone,
+            ),
+            IconButton(
+              icon: Icon(Icons.delete_outline, color: cs.error),
+              tooltip: 'Löschen',
+              onPressed: onDelete,
             ),
           ],
         ),

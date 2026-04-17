@@ -29,10 +29,51 @@ class HistoryScreen extends ConsumerWidget {
           return ListView.builder(
             padding: const EdgeInsets.all(16),
             itemCount: list.length,
-            itemBuilder: (context, i) => _HistoryCard(entry: list[i]),
+            itemBuilder: (context, i) => _HistoryCard(
+              entry: list[i],
+              onDelete: () => _delete(context, ref, list[i]),
+            ),
           );
         },
       ),
+    );
+  }
+
+  Future<void> _delete(
+    BuildContext context,
+    WidgetRef ref,
+    MaintenanceHistoryTableData entry,
+  ) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Eintrag löschen?'),
+        content: const Text(
+          'Der Eintrag wird dauerhaft aus der Historie entfernt.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Abbrechen'),
+          ),
+          FilledButton.tonal(
+            style: FilledButton.styleFrom(
+              foregroundColor: Theme.of(ctx).colorScheme.onErrorContainer,
+              backgroundColor: Theme.of(ctx).colorScheme.errorContainer,
+            ),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Löschen'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+    await ref
+        .read(maintenanceHistoryRepositoryProvider)
+        .deleteEntry(entry.id);
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Eintrag gelöscht')),
     );
   }
 }
@@ -66,24 +107,24 @@ class _Empty extends StatelessWidget {
 
 class _HistoryCard extends StatelessWidget {
   final MaintenanceHistoryTableData entry;
-  const _HistoryCard({required this.entry});
+  final VoidCallback onDelete;
+  const _HistoryCard({required this.entry, required this.onDelete});
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     final type = ReminderType.fromString(entry.type);
     final fmt = DateFormat('dd.MM.yyyy', 'de');
 
     return Card(
       margin: const EdgeInsets.only(bottom: 10),
       child: Padding(
-        padding: const EdgeInsets.all(14),
+        padding: const EdgeInsets.fromLTRB(14, 14, 6, 14),
         child: Row(
           children: [
             CircleAvatar(
-              backgroundColor:
-                  Theme.of(context).colorScheme.primaryContainer,
-              child: Icon(_icon(type),
-                  color: Theme.of(context).colorScheme.primary),
+              backgroundColor: cs.primaryContainer,
+              child: Icon(_icon(type), color: cs.primary),
             ),
             const SizedBox(width: 14),
             Expanded(
@@ -104,6 +145,11 @@ class _HistoryCard extends StatelessWidget {
                         style: Theme.of(context).textTheme.bodySmall),
                 ],
               ),
+            ),
+            IconButton(
+              icon: Icon(Icons.delete_outline, color: cs.error),
+              tooltip: 'Löschen',
+              onPressed: onDelete,
             ),
           ],
         ),

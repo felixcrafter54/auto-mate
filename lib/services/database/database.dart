@@ -289,6 +289,10 @@ class AppDatabase extends _$AppDatabase {
     return into(maintenanceHistoryTable).insert(history);
   }
 
+  Future<int> deleteMaintenanceHistoryEntry(int id) {
+    return (delete(maintenanceHistoryTable)..where((h) => h.id.equals(id))).go();
+  }
+
   Stream<List<MaintenanceHistoryTableData>> watchMaintenanceHistory(
       int vehicleId) {
     return (select(maintenanceHistoryTable)

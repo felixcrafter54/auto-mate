@@ -85,7 +85,8 @@ class NotificationService {
       return;
     }
     await init();
-    if (when.isBefore(DateTime.now())) return;
+    final delay = when.difference(DateTime.now());
+    if (delay.isNegative) return;
 
     const android = AndroidNotificationDetails(
       'automate_reminders',
@@ -97,11 +98,17 @@ class NotificationService {
     const ios = DarwinNotificationDetails();
     const details = NotificationDetails(android: android, iOS: ios);
 
+    // Schedule relative to UTC "now" so the result is correct even if
+    // `tz.local` hasn't been configured (it defaults to UTC after
+    // `initializeTimeZones()` — using it with a local DateTime misinterprets
+    // the fields and pushes the alarm by the timezone offset).
+    final zoned = tz.TZDateTime.now(tz.UTC).add(delay);
+
     await _plugin.zonedSchedule(
       id,
       title,
       body,
-      tz.TZDateTime.from(when, tz.local),
+      zoned,
       details,
       androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
       uiLocalNotificationDateInterpretation:
@@ -138,8 +145,14 @@ class NotificationService {
       _webTimers.remove(id)?.cancel();
       return;
     }
-    await init();
-    await _plugin.cancel(id);
+    try {
+      await init();
+      await _plugin.cancel(id);
+    } catch (_) {
+      // Swallow — canceling a non-existent / uninitialized alarm must never
+      // block callers (e.g. deleting a reminder should succeed even if the
+      // alarm was never scheduled).
+    }
   }
 
   // ==========================================================================

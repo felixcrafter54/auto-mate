@@ -81,6 +81,46 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     }
   }
 
+  Future<void> _scheduleTwoMinuteTest() async {
+    final svc = NotificationService();
+    var granted = await svc.hasPermission();
+    if (!granted) granted = await svc.requestPermission();
+    if (!mounted) return;
+    setState(() => _notifyPermissionGranted = granted);
+    if (!granted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Benachrichtigungen nicht erlaubt.')),
+      );
+      return;
+    }
+    final when = DateTime.now().add(const Duration(minutes: 2));
+    try {
+      // Cancel any previous test so a second tap overwrites the first.
+      await svc.cancel(999998);
+      await svc.schedule(
+        id: 999998,
+        title: 'AutoMate · Test',
+        body: 'Geplante Benachrichtigung nach 2 Minuten. 🎉',
+        when: when,
+      );
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            kIsWeb
+                ? 'Test in 2 Min geplant — die PWA muss offen bleiben.'
+                : 'Test in 2 Min geplant.',
+          ),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Planung fehlgeschlagen: $e')),
+      );
+    }
+  }
+
   Future<void> _sendTestNotification() async {
     final svc = NotificationService();
     var granted = await svc.hasPermission();
@@ -240,6 +280,12 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             icon: const Icon(Icons.notifications_outlined),
             label: const Text('Test-Benachrichtigung senden'),
             onPressed: _sendTestNotification,
+          ),
+          const SizedBox(height: 6),
+          OutlinedButton.icon(
+            icon: const Icon(Icons.timer_outlined),
+            label: const Text('Geplanten Test in 2 Minuten'),
+            onPressed: _scheduleTwoMinuteTest,
           ),
           const SizedBox(height: 12),
           Text(

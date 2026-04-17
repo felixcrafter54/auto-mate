@@ -104,6 +104,8 @@ class MaintenanceHistoryRepository {
     MaintenanceHistoryTableCompanion history,
   ) =>
       db.insertMaintenanceHistory(history);
+
+  Future<int> deleteEntry(int id) => db.deleteMaintenanceHistoryEntry(id);
 }
 
 class ConsumablesRepository {

@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:http/http.dart' as http;
 import 'package:latlong2/latlong.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -29,9 +30,11 @@ class _Garage {
 
 class _GarageFinderScreenState extends State<GarageFinderScreen> {
   final _mapController = MapController();
-  final LatLng _center = const LatLng(51.1657, 10.4515); // mid-Germany fallback
+  static const LatLng _fallbackCenter = LatLng(51.1657, 10.4515); // mid-Germany
+  LatLng _center = _fallbackCenter;
   final List<_Garage> _garages = [];
   bool _loading = true;
+  bool _usedFallback = false;
   String? _error;
 
   @override
@@ -40,10 +43,38 @@ class _GarageFinderScreenState extends State<GarageFinderScreen> {
     _load();
   }
 
+  Future<LatLng> _resolveCenter() async {
+    try {
+      if (!await Geolocator.isLocationServiceEnabled()) {
+        return _fallbackCenter;
+      }
+      var perm = await Geolocator.checkPermission();
+      if (perm == LocationPermission.denied) {
+        perm = await Geolocator.requestPermission();
+      }
+      if (perm == LocationPermission.denied ||
+          perm == LocationPermission.deniedForever) {
+        return _fallbackCenter;
+      }
+      final pos = await Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.medium,
+          timeLimit: Duration(seconds: 10),
+        ),
+      );
+      return LatLng(pos.latitude, pos.longitude);
+    } catch (_) {
+      return _fallbackCenter;
+    }
+  }
+
   Future<void> _load() async {
     try {
+      final center = await _resolveCenter();
+      _center = center;
+      _usedFallback = center == _fallbackCenter;
+
       // Use Overpass API to find nearby auto repair shops (OSM, free, no key).
-      // We try a default center; in a real app we'd use the GPS location.
       final around = '(around:8000,${_center.latitude},${_center.longitude})';
       final query = '''
 [out:json][timeout:15];
@@ -146,9 +177,28 @@ out center 40;
                     Container(
                       padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
                       alignment: Alignment.centerLeft,
-                      child: Text(
-                        '${_garages.length} Werkstätten gefunden',
-                        style: Theme.of(context).textTheme.titleSmall,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            '${_garages.length} Werkstätten gefunden',
+                            style: Theme.of(context).textTheme.titleSmall,
+                          ),
+                          if (_usedFallback) ...[
+                            const SizedBox(height: 2),
+                            Text(
+                              'Kein Standort verfügbar — Suche um Deutschland-Mitte.',
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .bodySmall
+                                  ?.copyWith(
+                                    color: Theme.of(context)
+                                        .colorScheme
+                                        .outline,
+                                  ),
+                            ),
+                          ],
+                        ],
                       ),
                     ),
                     Expanded(
