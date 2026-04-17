@@ -115,44 +115,58 @@ class _AddReminderScreenState extends ConsumerState<AddReminderScreen> {
 
     setState(() => _saving = true);
 
-    final sortedOffsets = _offsets.toList()..sort((a, b) => b.compareTo(a));
-    final hasPermission = await _ensurePermission();
+    try {
+      final sortedOffsets = _offsets.toList()..sort((a, b) => b.compareTo(a));
+      final hasPermission = await _ensurePermission();
 
-    final repo = ref.read(remindersRepositoryProvider);
-    final mileage = int.tryParse(_mileageCtrl.text);
-    final customLabel = _type == ReminderType.custom
-        ? _customLabelCtrl.text.trim()
-        : null;
+      final repo = ref.read(remindersRepositoryProvider);
+      final mileage = int.tryParse(_mileageCtrl.text);
+      final customLabel = _type == ReminderType.custom
+          ? _customLabelCtrl.text.trim()
+          : null;
 
-    final id = await repo.insertReminder(
-      RemindersCompanion.insert(
-        vehicleId: widget.vehicleId,
-        type: _type.dbValue,
-        customLabel: Value(customLabel),
-        dueDate: _dueDate,
-        dueMileage: Value(mileage),
-        notifyOffsetsDays: Value(SettingsService.encodeOffsets(sortedOffsets)),
-        createdAt: DateTime.now(),
-      ),
-    );
+      final id = await repo.insertReminder(
+        RemindersCompanion.insert(
+          vehicleId: widget.vehicleId,
+          type: _type.dbValue,
+          customLabel: Value(customLabel),
+          dueDate: _dueDate,
+          dueMileage: Value(mileage),
+          notifyOffsetsDays: Value(SettingsService.encodeOffsets(sortedOffsets)),
+          createdAt: DateTime.now(),
+        ),
+      );
 
-    if (hasPermission && sortedOffsets.isNotEmpty) {
-      final svc = NotificationService();
-      final title = customLabel ?? _type.displayName;
-      for (var i = 0; i < sortedOffsets.length; i++) {
-        final days = sortedOffsets[i];
-        final when = _dueDate.subtract(Duration(days: days));
-        await svc.schedule(
-          id: id * 100 + i,
-          title: 'AutoMate · $title',
-          body: _offsetLabel(days, short: false),
-          when: when,
-        );
+      if (hasPermission && sortedOffsets.isNotEmpty) {
+        final svc = NotificationService();
+        final title = customLabel ?? _type.displayName;
+        for (var i = 0; i < sortedOffsets.length; i++) {
+          final days = sortedOffsets[i];
+          final when = _dueDate.subtract(Duration(days: days));
+          try {
+            await svc.schedule(
+              id: id * 100 + i,
+              title: 'AutoMate · $title',
+              body: _offsetLabel(days, short: false),
+              when: when,
+            );
+          } catch (_) {
+            // Scheduling a single notification failed (e.g. exact-alarm
+            // permission on Android 12+). Continue with the rest — the
+            // reminder itself is already persisted.
+          }
+        }
       }
-    }
 
-    if (!mounted) return;
-    context.pop();
+      if (!mounted) return;
+      context.pop();
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _saving = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Speichern fehlgeschlagen: $e')),
+      );
+    }
   }
 
   String _offsetLabel(int days, {bool short = true}) {

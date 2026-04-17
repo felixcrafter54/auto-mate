@@ -110,7 +110,7 @@ User
 | Backend      | Node.js + Express or Fastify (or Dart with Shelf)        |
 | Database     | PostgreSQL (vehicles, users, reminders)                  |
 | Auth         | Supabase Auth or Firebase Auth                           |
-| AI / LLM     | Anthropic Claude API (claude-sonnet-4-6)                 |
+| AI / LLM     | Google Gemini API (gemini-2.5-flash)                     |
 | Voice        | `speech_to_text` package + `flutter_tts` for TTS         |
 | Vehicle API  | NHTSA vPIC API (free) or TecDoc                          |
 | Tutorials    | YouTube Data API v3                                      |
@@ -144,27 +144,35 @@ GET https://www.googleapis.com/youtube/v3/search
   &key={API_KEY}
 ```
 
-### Anthropic Claude API (breakdown assistant, Dart)
+### Google Gemini API (breakdown assistant, Dart)
 ```dart
 final response = await http.post(
-  Uri.parse('https://api.anthropic.com/v1/messages'),
+  Uri.parse(
+    'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent',
+  ),
   headers: {
-    'x-api-key': apiKey,
-    'anthropic-version': '2023-06-01',
+    'x-goog-api-key': apiKey,
     'content-type': 'application/json',
   },
   body: jsonEncode({
-    'model': 'claude-sonnet-4-6',
-    'max_tokens': 1024,
-    'system': 'You are an automotive assistant. '
+    'systemInstruction': {
+      'parts': [
+        {
+          'text': 'You are an automotive assistant. '
               'Car: $vehicleMake $vehicleModel $vehicleYear. '
               'User skill level: $skillLevel. '
-              'Give practical advice matching their skill level.',
-    'messages': [{'role': 'user', 'content': userMessage}],
+              'Give practical advice matching their skill level.'
+        }
+      ]
+    },
+    'contents': [
+      {'role': 'user', 'parts': [{'text': userMessage}]}
+    ],
+    'generationConfig': {'maxOutputTokens': 1024},
   }),
 );
 final data = jsonDecode(response.body);
-final reply = data['content'][0]['text'];
+final reply = data['candidates'][0]['content']['parts'][0]['text'];
 ```
 
 ---
@@ -204,7 +212,7 @@ automate/
 │   │   ├── breakdown/             ← AI assistant + voice
 │   │   └── workshop_report/
 │   └── services/
-│       ├── claude_service.dart    ← Anthropic API client
+│       ├── gemini_service.dart    ← Google Gemini API client
 │       ├── youtube_service.dart
 │       ├── nhtsa_service.dart
 │       ├── obd_service.dart       ← BLE + ELM327

@@ -119,7 +119,7 @@ class ProfileDrawer extends ConsumerWidget {
             ListTile(
               leading: const Icon(Icons.key_outlined),
               title: const Text('API-Keys & Sprache'),
-              subtitle: const Text('Claude, YouTube, Berichtsprache'),
+              subtitle: const Text('Gemini, YouTube, Berichtsprache'),
               trailing: const Icon(Icons.chevron_right, size: 18),
               onTap: () {
                 Navigator.pop(context);

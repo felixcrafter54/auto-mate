@@ -6,7 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
 import '../../core/providers/database_provider.dart';
 import '../../core/providers/profile_provider.dart';
-import '../../services/claude_service.dart';
+import '../../services/gemini_service.dart';
 import '../../services/database/database.dart';
 import '../../services/models/enums.dart';
 
@@ -25,7 +25,7 @@ class BreakdownScreen extends ConsumerStatefulWidget {
 class _BreakdownScreenState extends ConsumerState<BreakdownScreen> {
   final _inputCtrl = TextEditingController();
   final _scrollCtrl = ScrollController();
-  final List<ClaudeMessage> _messages = [];
+  final List<GeminiMessage> _messages = [];
   bool _sending = false;
 
   // Voice
@@ -83,13 +83,13 @@ class _BreakdownScreenState extends ConsumerState<BreakdownScreen> {
     _inputCtrl.clear();
 
     setState(() {
-      _messages.add(ClaudeMessage(role: 'user', content: text));
+      _messages.add(GeminiMessage(role: 'user', content: text));
       _sending = true;
     });
     _scrollToBottom();
 
     try {
-      final service = ref.read(claudeServiceProvider);
+      final service = ref.read(geminiServiceProvider);
       final systemPrompt = service.buildBreakdownSystemPrompt(
         make: vehicle.make,
         model: vehicle.model,
@@ -105,7 +105,7 @@ class _BreakdownScreenState extends ConsumerState<BreakdownScreen> {
       );
       if (!mounted) return;
       setState(() {
-        _messages.add(ClaudeMessage(role: 'assistant', content: reply));
+        _messages.add(GeminiMessage(role: 'assistant', content: reply));
         _sending = false;
       });
       _scrollToBottom();
@@ -116,7 +116,7 @@ class _BreakdownScreenState extends ConsumerState<BreakdownScreen> {
     } catch (e) {
       if (!mounted) return;
       setState(() {
-        _messages.add(ClaudeMessage(
+        _messages.add(GeminiMessage(
           role: 'assistant',
           content: 'Fehler: $e',
         ));
@@ -275,7 +275,7 @@ class _EmptyIntro extends StatelessWidget {
 }
 
 class _Bubble extends StatelessWidget {
-  final ClaudeMessage message;
+  final GeminiMessage message;
   const _Bubble({required this.message});
 
   @override

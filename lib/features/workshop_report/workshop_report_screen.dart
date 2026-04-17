@@ -4,7 +4,7 @@ import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 import '../../core/providers/database_provider.dart';
-import '../../services/claude_service.dart';
+import '../../services/gemini_service.dart';
 import '../../services/database/database.dart';
 import '../../services/models/enums.dart';
 import '../../services/settings_service.dart';
@@ -44,7 +44,7 @@ class _WorkshopReportScreenState extends ConsumerState<WorkshopReportScreen> {
 
     try {
       final language = await ref.read(settingsServiceProvider).getReportLanguage();
-      final service = ref.read(claudeServiceProvider);
+      final service = ref.read(geminiServiceProvider);
       final systemPrompt = service.buildWorkshopReportPrompt(
         make: vehicle.make,
         model: vehicle.model,
@@ -56,7 +56,7 @@ class _WorkshopReportScreenState extends ConsumerState<WorkshopReportScreen> {
       final report = await service.complete(
         systemPrompt: systemPrompt,
         messages: [
-          ClaudeMessage(
+          GeminiMessage(
             role: 'user',
             content: _symptomCtrl.text.trim(),
           ),

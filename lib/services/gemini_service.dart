@@ -4,60 +4,77 @@ import 'package:http/http.dart' as http;
 import '../services/models/enums.dart';
 import 'settings_service.dart';
 
-const _endpoint = 'https://api.anthropic.com/v1/messages';
-const _model = 'claude-sonnet-4-6';
+const _model = 'gemini-2.5-flash';
+const _endpoint =
+    'https://generativelanguage.googleapis.com/v1beta/models/$_model:generateContent';
 
-class ClaudeMessage {
+class GeminiMessage {
   final String role;
   final String content;
-  const ClaudeMessage({required this.role, required this.content});
+  const GeminiMessage({required this.role, required this.content});
 
-  Map<String, dynamic> toJson() => {'role': role, 'content': content};
+  Map<String, dynamic> toJson() => {
+        'role': role == 'assistant' ? 'model' : role,
+        'parts': [
+          {'text': content},
+        ],
+      };
 }
 
-class ClaudeService {
+class GeminiService {
   final SettingsService settings;
   final http.Client _http;
 
-  ClaudeService(this.settings, {http.Client? client})
+  GeminiService(this.settings, {http.Client? client})
       : _http = client ?? http.Client();
 
   Future<String> complete({
     required String systemPrompt,
-    required List<ClaudeMessage> messages,
+    required List<GeminiMessage> messages,
     int maxTokens = 1024,
   }) async {
-    final apiKey = await settings.getClaudeKey();
+    final apiKey = await settings.getGeminiKey();
     if (apiKey == null || apiKey.isEmpty) {
-      throw const ClaudeMissingKeyException();
+      throw const GeminiMissingKeyException();
     }
 
     final resp = await _http.post(
       Uri.parse(_endpoint),
       headers: {
-        'x-api-key': apiKey,
-        'anthropic-version': '2023-06-01',
+        'x-goog-api-key': apiKey,
         'content-type': 'application/json',
-        'anthropic-dangerous-direct-browser-access': 'true',
       },
       body: jsonEncode({
-        'model': _model,
-        'max_tokens': maxTokens,
-        'system': systemPrompt,
-        'messages': messages.map((m) => m.toJson()).toList(),
+        'systemInstruction': {
+          'parts': [
+            {'text': systemPrompt},
+          ],
+        },
+        'contents': messages.map((m) => m.toJson()).toList(),
+        'generationConfig': {
+          'maxOutputTokens': maxTokens,
+        },
       }),
     );
 
     if (resp.statusCode != 200) {
-      throw ClaudeApiException(resp.statusCode, resp.body);
+      throw GeminiApiException(resp.statusCode, resp.body);
     }
 
     final data = jsonDecode(resp.body) as Map<String, dynamic>;
-    final contentList = data['content'] as List<dynamic>;
-    final text = contentList
+    final candidates = data['candidates'] as List<dynamic>?;
+    if (candidates == null || candidates.isEmpty) {
+      throw GeminiApiException(resp.statusCode, resp.body);
+    }
+    final first = candidates.first as Map<String, dynamic>;
+    final content = first['content'] as Map<String, dynamic>?;
+    final parts = content?['parts'] as List<dynamic>?;
+    if (parts == null) {
+      throw GeminiApiException(resp.statusCode, resp.body);
+    }
+    final text = parts
         .whereType<Map<String, dynamic>>()
-        .where((c) => c['type'] == 'text')
-        .map((c) => c['text'] as String)
+        .map((p) => p['text'] as String? ?? '')
         .join('\n');
     return text.trim();
   }
@@ -134,24 +151,24 @@ Avoid guesses presented as facts — flag uncertainty.''';
 
 // ── Exceptions ───────────────────────────────────────────────────────────────
 
-class ClaudeMissingKeyException implements Exception {
-  const ClaudeMissingKeyException();
+class GeminiMissingKeyException implements Exception {
+  const GeminiMissingKeyException();
   @override
   String toString() =>
-      'Kein Claude-API-Key hinterlegt. Bitte in den Einstellungen eintragen.';
+      'Kein Gemini-API-Key hinterlegt. Bitte in den Einstellungen eintragen.';
 }
 
-class ClaudeApiException implements Exception {
+class GeminiApiException implements Exception {
   final int statusCode;
   final String body;
-  const ClaudeApiException(this.statusCode, this.body);
+  const GeminiApiException(this.statusCode, this.body);
   @override
-  String toString() => 'Claude API Fehler ($statusCode): $body';
+  String toString() => 'Gemini API Fehler ($statusCode): $body';
 }
 
 // ── Provider ─────────────────────────────────────────────────────────────────
 
-final claudeServiceProvider = Provider<ClaudeService>((ref) {
+final geminiServiceProvider = Provider<GeminiService>((ref) {
   final settings = ref.watch(settingsServiceProvider);
-  return ClaudeService(settings);
+  return GeminiService(settings);
 });

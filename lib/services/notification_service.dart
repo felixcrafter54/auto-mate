@@ -1,17 +1,26 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:timezone/data/latest_all.dart' as tzdata;
 import 'package:timezone/timezone.dart' as tz;
 
-/// Lightweight wrapper around flutter_local_notifications.
-/// On web all operations are no-ops (Web Notifications need different plumbing).
+import 'web_notification_stub.dart'
+    if (dart.library.html) 'web_notification_web.dart';
+
+/// Wrapper around flutter_local_notifications with a web fallback built on
+/// the browser Notification API. On web, scheduled notifications only fire
+/// while the PWA tab is open (timers are in-memory) — background push would
+/// require FCM, which is out of scope for now.
 class NotificationService {
   static final _plugin = FlutterLocalNotificationsPlugin();
   static bool _initialized = false;
+  static final Map<int, Timer> _webTimers = {};
 
   Future<void> init() async {
-    if (_initialized || kIsWeb) {
+    if (_initialized) return;
+    if (kIsWeb) {
       _initialized = true;
       return;
     }
@@ -37,21 +46,29 @@ class NotificationService {
 
   /// Returns true if the user has already granted notification permission.
   Future<bool> hasPermission() async {
-    if (kIsWeb) return false;
+    if (kIsWeb) {
+      return WebNotificationApi.permission == 'granted';
+    }
     final status = await Permission.notification.status;
     return status.isGranted;
   }
 
   /// Requests notification permission. Returns true if granted.
-  /// Shows the native OS dialog on Android 13+ and iOS.
+  /// Shows the native OS dialog on Android 13+, iOS, and the browser prompt
+  /// on web.
   Future<bool> requestPermission() async {
-    if (kIsWeb) return false;
+    if (kIsWeb) {
+      if (WebNotificationApi.permission == 'granted') return true;
+      if (WebNotificationApi.permission == 'denied') return false;
+      final result = await WebNotificationApi.requestPermission();
+      return result == 'granted';
+    }
     final status = await Permission.notification.request();
     return status.isGranted;
   }
 
-  /// Opens the app's system settings page so the user can grant permission
-  /// after previously denying it.
+  /// Opens the OS settings for the app. On web this is a no-op — browsers
+  /// don't expose a way to programmatically open site permission settings.
   Future<void> openSystemSettings() async {
     if (kIsWeb) return;
     await openAppSettings();
@@ -63,7 +80,10 @@ class NotificationService {
     required String body,
     required DateTime when,
   }) async {
-    if (kIsWeb) return;
+    if (kIsWeb) {
+      _scheduleWeb(id: id, title: title, body: body, when: when);
+      return;
+    }
     await init();
     if (when.isBefore(DateTime.now())) return;
 
@@ -89,9 +109,70 @@ class NotificationService {
     );
   }
 
+  /// Shows a notification immediately. Useful for testing that the
+  /// permission and delivery pipeline actually works.
+  Future<void> showNow({
+    required int id,
+    required String title,
+    required String body,
+  }) async {
+    if (kIsWeb) {
+      _showWebNotification(title, body);
+      return;
+    }
+    await init();
+    const android = AndroidNotificationDetails(
+      'automate_reminders',
+      'Wartungs-Erinnerungen',
+      channelDescription: 'Erinnerungen für Ölwechsel, TÜV, Inspektionen …',
+      importance: Importance.high,
+      priority: Priority.high,
+    );
+    const ios = DarwinNotificationDetails();
+    const details = NotificationDetails(android: android, iOS: ios);
+    await _plugin.show(id, title, body, details);
+  }
+
   Future<void> cancel(int id) async {
-    if (kIsWeb) return;
+    if (kIsWeb) {
+      _webTimers.remove(id)?.cancel();
+      return;
+    }
     await init();
     await _plugin.cancel(id);
+  }
+
+  // ==========================================================================
+  // WEB IMPLEMENTATION
+  // ==========================================================================
+
+  void _scheduleWeb({
+    required int id,
+    required String title,
+    required String body,
+    required DateTime when,
+  }) {
+    if (WebNotificationApi.permission != 'granted') return;
+
+    final now = DateTime.now();
+    final delay = when.difference(now);
+
+    if (delay.isNegative) return;
+
+    // Timer supports up to ~24 days on the web (setTimeout 32-bit limit).
+    // Anything further out is skipped — the native app covers long-range
+    // scheduling; for web we'd need FCM/push to fire reliably.
+    if (delay.inDays > 24) return;
+
+    _webTimers.remove(id)?.cancel();
+    _webTimers[id] = Timer(delay, () {
+      _showWebNotification(title, body);
+      _webTimers.remove(id);
+    });
+  }
+
+  void _showWebNotification(String title, String body) {
+    if (WebNotificationApi.permission != 'granted') return;
+    WebNotificationApi.show(title, body);
   }
 }

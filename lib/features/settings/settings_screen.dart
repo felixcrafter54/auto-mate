@@ -13,14 +13,14 @@ class SettingsScreen extends ConsumerStatefulWidget {
 }
 
 class _SettingsScreenState extends ConsumerState<SettingsScreen> {
-  final _claudeCtrl = TextEditingController();
+  final _geminiCtrl = TextEditingController();
   final _youtubeCtrl = TextEditingController();
   final _customOffsetCtrl = TextEditingController();
   String _language = 'de';
   Set<int> _notifyOffsets = {56, 28, 7};
   bool _notifyPermissionGranted = false;
   bool _loading = true;
-  bool _revealClaude = false;
+  bool _revealGemini = false;
   bool _revealYoutube = false;
 
   @override
@@ -31,14 +31,14 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
   Future<void> _load() async {
     final svc = ref.read(settingsServiceProvider);
-    final claude = await svc.getClaudeKey();
+    final gemini = await svc.getGeminiKey();
     final yt = await svc.getYoutubeKey();
     final lang = await svc.getReportLanguage();
     final offsets = await svc.getDefaultNotifyOffsets();
     final permGranted = await NotificationService().hasPermission();
     if (!mounted) return;
     setState(() {
-      _claudeCtrl.text = claude ?? '';
+      _geminiCtrl.text = gemini ?? '';
       _youtubeCtrl.text = yt ?? '';
       _language = lang;
       _notifyOffsets = offsets.toSet();
@@ -49,11 +49,11 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
   Future<void> _save() async {
     final svc = ref.read(settingsServiceProvider);
-    await svc.set(kSettingClaudeApiKey, _claudeCtrl.text.trim());
+    await svc.set(kSettingGeminiApiKey, _geminiCtrl.text.trim());
     await svc.set(kSettingYoutubeApiKey, _youtubeCtrl.text.trim());
     await svc.set(kSettingReportLanguage, _language);
     await svc.setDefaultNotifyOffsets(_notifyOffsets.toList());
-    ref.invalidate(claudeKeyProvider);
+    ref.invalidate(geminiKeyProvider);
     ref.invalidate(youtubeKeyProvider);
     ref.invalidate(reportLanguageProvider);
     ref.invalidate(defaultNotifyOffsetsProvider);
@@ -81,6 +81,31 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     }
   }
 
+  Future<void> _sendTestNotification() async {
+    final svc = NotificationService();
+    var granted = await svc.hasPermission();
+    if (!granted) granted = await svc.requestPermission();
+    if (!mounted) return;
+    setState(() => _notifyPermissionGranted = granted);
+    if (!granted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Benachrichtigungen nicht erlaubt.'),
+        ),
+      );
+      return;
+    }
+    await svc.showNow(
+      id: 999999,
+      title: 'AutoMate · Test',
+      body: 'Benachrichtigungen funktionieren. 🎉',
+    );
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Test-Benachrichtigung gesendet')),
+    );
+  }
+
   void _addCustomOffset() {
     final n = int.tryParse(_customOffsetCtrl.text.trim());
     if (n == null || n <= 0) return;
@@ -100,7 +125,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
   @override
   void dispose() {
-    _claudeCtrl.dispose();
+    _geminiCtrl.dispose();
     _youtubeCtrl.dispose();
     _customOffsetCtrl.dispose();
     super.dispose();
@@ -133,27 +158,26 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           ),
           const SizedBox(height: 16),
 
-          // Claude
+          // Gemini
           TextField(
-            controller: _claudeCtrl,
-            obscureText: !_revealClaude,
+            controller: _geminiCtrl,
+            obscureText: !_revealGemini,
             decoration: InputDecoration(
-              labelText: 'Claude API-Key (Anthropic)',
-              hintText: 'sk-ant-...',
+              labelText: 'Gemini API-Key (Google AI)',
+              hintText: 'AIza...',
               border: const OutlineInputBorder(),
               prefixIcon: const Icon(Icons.psychology_outlined),
               suffixIcon: IconButton(
-                icon: Icon(_revealClaude ? Icons.visibility_off : Icons.visibility),
-                onPressed: () => setState(() => _revealClaude = !_revealClaude),
+                icon: Icon(_revealGemini ? Icons.visibility_off : Icons.visibility),
+                onPressed: () => setState(() => _revealGemini = !_revealGemini),
               ),
             ),
           ),
           const SizedBox(height: 6),
           TextButton.icon(
             icon: const Icon(Icons.open_in_new, size: 16),
-            label: const Text('Key bei Anthropic anlegen'),
-            onPressed: () =>
-                _open('https://console.anthropic.com/settings/keys'),
+            label: const Text('Key bei Google AI Studio anlegen'),
+            onPressed: () => _open('https://aistudio.google.com/app/apikey'),
           ),
           const SizedBox(height: 16),
 
@@ -184,34 +208,40 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
           _SectionTitle('Benachrichtigungen'),
           const SizedBox(height: 8),
-          if (!kIsWeb) ...[
-            Card(
-              color: _notifyPermissionGranted
-                  ? cs.primaryContainer.withValues(alpha: 0.35)
-                  : cs.errorContainer.withValues(alpha: 0.35),
-              child: ListTile(
-                leading: Icon(
-                  _notifyPermissionGranted
-                      ? Icons.notifications_active
-                      : Icons.notifications_off,
-                  color: _notifyPermissionGranted ? cs.primary : cs.error,
-                ),
-                title: Text(_notifyPermissionGranted
-                    ? 'Benachrichtigungen sind aktiv'
-                    : 'Benachrichtigungen sind deaktiviert'),
-                subtitle: Text(_notifyPermissionGranted
-                    ? 'Du bekommst Erinnerungen zu fälligen Wartungen.'
-                    : 'Ohne Berechtigung kann AutoMate dich nicht erinnern.'),
-                trailing: _notifyPermissionGranted
-                    ? null
-                    : FilledButton(
-                        onPressed: _requestNotifyPermission,
-                        child: const Text('Erlauben'),
-                      ),
+          Card(
+            color: _notifyPermissionGranted
+                ? cs.primaryContainer.withValues(alpha: 0.35)
+                : cs.errorContainer.withValues(alpha: 0.35),
+            child: ListTile(
+              leading: Icon(
+                _notifyPermissionGranted
+                    ? Icons.notifications_active
+                    : Icons.notifications_off,
+                color: _notifyPermissionGranted ? cs.primary : cs.error,
               ),
+              title: Text(_notifyPermissionGranted
+                  ? 'Benachrichtigungen sind aktiv'
+                  : 'Benachrichtigungen sind deaktiviert'),
+              subtitle: Text(_notifyPermissionGranted
+                  ? (kIsWeb
+                      ? 'Fallen nur, solange die PWA geöffnet ist.'
+                      : 'Du bekommst Erinnerungen zu fälligen Wartungen.')
+                  : 'Ohne Berechtigung kann AutoMate dich nicht erinnern.'),
+              trailing: _notifyPermissionGranted
+                  ? null
+                  : FilledButton(
+                      onPressed: _requestNotifyPermission,
+                      child: const Text('Erlauben'),
+                    ),
             ),
-            const SizedBox(height: 12),
-          ],
+          ),
+          const SizedBox(height: 8),
+          OutlinedButton.icon(
+            icon: const Icon(Icons.notifications_outlined),
+            label: const Text('Test-Benachrichtigung senden'),
+            onPressed: _sendTestNotification,
+          ),
+          const SizedBox(height: 12),
           Text(
             'Standard-Erinnerungszeitpunkte vor Fälligkeit. Lässt sich pro Erinnerung überschreiben.',
             style: Theme.of(context)
