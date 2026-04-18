@@ -1,6 +1,6 @@
 {
-    "name": "auto_mate",
-    "short_name": "auto_mate",
+    "name": "AutoMate",
+    "short_name": "AutoMate",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",
