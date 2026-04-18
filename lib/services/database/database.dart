@@ -29,8 +29,18 @@ class Vehicles extends Table {
   TextColumn get vin => text().nullable()();
   TextColumn get fuelType => text()(); // FuelType.value
   IntColumn get currentMileage => integer()();
+  IntColumn get annualKmEstimate => integer().nullable()();
   DateTimeColumn get createdAt => dateTime()();
   DateTimeColumn get updatedAt => dateTime()();
+}
+
+/// Fuel entries table — each refuelling event
+class FuelEntries extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  IntColumn get vehicleId => integer().references(Vehicles, #id)();
+  DateTimeColumn get date => dateTime()();
+  RealColumn get liters => real()();
+  IntColumn get odometerKm => integer()();
 }
 
 /// Maintenance reminders table
@@ -41,6 +51,7 @@ class Reminders extends Table {
   TextColumn get customLabel => text().nullable()();
   DateTimeColumn get dueDate => dateTime()();
   IntColumn get dueMileage => integer().nullable()();
+  IntColumn get notifyOffsetKm => integer().nullable()(); // km before due mileage to notify
   TextColumn get notifyOffsetsDays => text().nullable()(); // CSV of ints
   BoolColumn get notified => boolean().withDefault(const Constant(false))();
   DateTimeColumn get createdAt => dateTime()();
@@ -51,6 +62,7 @@ class MaintenanceHistoryTable extends Table {
   IntColumn get id => integer().autoIncrement()();
   IntColumn get vehicleId => integer().references(Vehicles, #id)();
   TextColumn get type => text()(); // ReminderType.dbValue
+  TextColumn get customLabel => text().nullable()();
   DateTimeColumn get completedDate => dateTime()();
   IntColumn get mileageAtCompletion => integer()();
   TextColumn get notes => text().nullable()();
@@ -91,12 +103,13 @@ class ConsumablesTable extends Table {
   MaintenanceHistoryTable,
   ConsumablesTable,
   AppSettings,
+  FuelEntries,
 ])
 class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 
   @override
-  int get schemaVersion => 5;
+  int get schemaVersion => 8;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -116,6 +129,16 @@ class AppDatabase extends _$AppDatabase {
           if (from < 5) {
             await m.addColumn(reminders, reminders.customLabel);
             await m.addColumn(reminders, reminders.notifyOffsetsDays);
+          }
+          if (from < 6) {
+            await m.addColumn(vehicles, vehicles.annualKmEstimate);
+            await m.createTable(fuelEntries);
+          }
+          if (from < 7) {
+            await m.addColumn(reminders, reminders.notifyOffsetKm);
+          }
+          if (from < 8) {
+            await m.addColumn(maintenanceHistoryTable, maintenanceHistoryTable.customLabel);
           }
         },
       );
@@ -215,6 +238,11 @@ class AppDatabase extends _$AppDatabase {
         .getSingleOrNull();
   }
 
+  Stream<Vehicle?> watchVehicleById(int vehicleId) {
+    return (select(vehicles)..where((v) => v.id.equals(vehicleId)))
+        .watchSingleOrNull();
+  }
+
   Future<bool> updateVehicle(VehiclesCompanion vehicle) {
     return update(vehicles).replace(vehicle);
   }
@@ -246,6 +274,7 @@ class AppDatabase extends _$AppDatabase {
       await (delete(consumablesTable)
             ..where((c) => c.vehicleId.equals(vehicleId)))
           .go();
+      await (delete(fuelEntries)..where((f) => f.vehicleId.equals(vehicleId))).go();
       await (delete(vehicles)..where((v) => v.id.equals(vehicleId))).go();
 
       return reminderIds;
@@ -280,6 +309,15 @@ class AppDatabase extends _$AppDatabase {
         .write(const RemindersCompanion(notified: Value(true)));
   }
 
+  Future<List<Reminder>> getKmRemindersToCheck(int vehicleId) {
+    return (select(reminders)
+          ..where((r) =>
+              r.vehicleId.equals(vehicleId) &
+              r.dueMileage.isNotNull() &
+              r.notified.equals(false)))
+        .get();
+  }
+
   // =========================================================================
   // MAINTENANCE HISTORY REPOSITORY
   // =========================================================================
@@ -299,6 +337,25 @@ class AppDatabase extends _$AppDatabase {
           ..where((h) => h.vehicleId.equals(vehicleId))
           ..orderBy([(h) => OrderingTerm(expression: h.completedDate, mode: OrderingMode.desc)]))
         .watch();
+  }
+
+  // =========================================================================
+  // FUEL ENTRIES REPOSITORY
+  // =========================================================================
+
+  Future<int> insertFuelEntry(FuelEntriesCompanion entry) {
+    return into(fuelEntries).insert(entry);
+  }
+
+  Stream<List<FuelEntry>> watchFuelEntriesByVehicle(int vehicleId) {
+    return (select(fuelEntries)
+          ..where((f) => f.vehicleId.equals(vehicleId))
+          ..orderBy([(f) => OrderingTerm(expression: f.date, mode: OrderingMode.desc)]))
+        .watch();
+  }
+
+  Future<int> deleteFuelEntry(int id) {
+    return (delete(fuelEntries)..where((f) => f.id.equals(id))).go();
   }
 
   // =========================================================================

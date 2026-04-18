@@ -17,6 +17,7 @@ class VehicleFormState {
   final String vin;
   final FuelType fuelType;
   final int mileage;
+  final int? annualKmEstimate;
   final bool isSaving;
   final String? error;
 
@@ -27,6 +28,7 @@ class VehicleFormState {
     this.vin = '',
     this.fuelType = FuelType.petrol,
     this.mileage = 0,
+    this.annualKmEstimate,
     this.isSaving = false,
     this.error,
   });
@@ -41,6 +43,8 @@ class VehicleFormState {
     String? vin,
     FuelType? fuelType,
     int? mileage,
+    int? annualKmEstimate,
+    bool clearAnnualKm = false,
     bool? isSaving,
     String? error,
     bool clearModel = false,
@@ -52,6 +56,7 @@ class VehicleFormState {
       vin: vin ?? this.vin,
       fuelType: fuelType ?? this.fuelType,
       mileage: mileage ?? this.mileage,
+      annualKmEstimate: clearAnnualKm ? null : (annualKmEstimate ?? this.annualKmEstimate),
       isSaving: isSaving ?? this.isSaving,
       error: error,
     );
@@ -95,6 +100,14 @@ class VehicleFormNotifier extends Notifier<VehicleFormState> {
     state = state.copyWith(mileage: km);
   }
 
+  void setAnnualKmEstimate(int? km) {
+    if (km == null) {
+      state = state.copyWith(clearAnnualKm: true);
+    } else {
+      state = state.copyWith(annualKmEstimate: km);
+    }
+  }
+
   Future<bool> save() async {
     if (!state.isValid) return false;
 
@@ -117,6 +130,7 @@ class VehicleFormNotifier extends Notifier<VehicleFormState> {
         vin: Value(state.vin.isEmpty ? null : state.vin),
         fuelType: Value(state.fuelType.value),
         currentMileage: Value(state.mileage),
+        annualKmEstimate: Value(state.annualKmEstimate),
         createdAt: Value(now),
         updatedAt: Value(now),
       ));

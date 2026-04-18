@@ -39,6 +39,8 @@ class VehicleSetupScreen extends ConsumerWidget {
             _FuelTypePicker(selected: form.fuelType),
             const SizedBox(height: 12),
             _MileageField(mileage: form.mileage),
+            const SizedBox(height: 12),
+            _AnnualKmField(value: form.annualKmEstimate),
             const SizedBox(height: 32),
             if (form.error != null)
               Padding(
@@ -323,6 +325,30 @@ class _MileageField extends ConsumerWidget {
       onChanged: (v) {
         final km = int.tryParse(v) ?? 0;
         ref.read(vehicleFormProvider.notifier).setMileage(km);
+      },
+    );
+  }
+}
+
+class _AnnualKmField extends ConsumerWidget {
+  final int? value;
+  const _AnnualKmField({required this.value});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return TextFormField(
+      initialValue: value != null ? '$value' : '',
+      keyboardType: TextInputType.number,
+      decoration: const InputDecoration(
+        labelText: 'Geschätzte Kilometer pro Jahr (optional)',
+        border: OutlineInputBorder(),
+        prefixIcon: Icon(Icons.route),
+        suffixText: 'km/Jahr',
+        helperText: 'Hilft bei der Berechnung von Wartungsintervallen',
+      ),
+      onChanged: (v) {
+        final km = int.tryParse(v.trim());
+        ref.read(vehicleFormProvider.notifier).setAnnualKmEstimate(km);
       },
     );
   }

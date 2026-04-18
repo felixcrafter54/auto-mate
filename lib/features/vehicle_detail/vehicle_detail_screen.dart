@@ -5,13 +5,9 @@ import 'package:go_router/go_router.dart';
 import '../../core/providers/database_provider.dart';
 import '../../core/providers/profile_provider.dart';
 import '../../services/database/database.dart';
+import '../../services/km_reminder_service.dart';
 import '../../services/models/enums.dart';
 import '../../services/notification_service.dart';
-
-final vehicleDetailProvider =
-    FutureProvider.family<Vehicle?, int>((ref, vehicleId) {
-  return ref.read(vehiclesRepositoryProvider).getVehicleById(vehicleId);
-});
 
 class VehicleDetailScreen extends ConsumerWidget {
   final int vehicleId;
@@ -19,7 +15,7 @@ class VehicleDetailScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final vehicleAsync = ref.watch(vehicleDetailProvider(vehicleId));
+    final vehicleAsync = ref.watch(vehicleStreamProvider(vehicleId));
 
     return vehicleAsync.when(
       loading: () => const Scaffold(
@@ -138,6 +134,13 @@ class _VehicleDetailView extends ConsumerWidget {
           _SectionTitle('Wartung'),
           const SizedBox(height: 8),
           _ActionTile(
+            icon: Icons.local_gas_station,
+            iconColor: cs.primary,
+            title: 'Tanken & Verbrauch',
+            subtitle: 'Tankfüllungen eintragen · Verbrauch berechnen',
+            onTap: () => context.push('/vehicle/${vehicle.id}/fuel'),
+          ),
+          _ActionTile(
             icon: Icons.notifications_outlined,
             iconColor: cs.primary,
             title: 'Erinnerungen',
@@ -248,7 +251,7 @@ class _VehicleDetailView extends ConsumerWidget {
 
     if (result == null) return;
     await ref.read(vehiclesRepositoryProvider).updateMileage(vehicle.id, result);
-    ref.invalidate(vehicleDetailProvider(vehicle.id));
+    await checkKmReminders(ref.read(databaseProvider), vehicle.id, result);
     if (!context.mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text('Kilometerstand auf ${_formatKm(result)} km aktualisiert')),

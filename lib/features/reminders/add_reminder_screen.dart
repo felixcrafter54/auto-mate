@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import '../../core/l10n/reminder_labels.dart';
 import '../../core/providers/database_provider.dart';
 import '../../services/database/database.dart';
 import '../../services/models/enums.dart';
@@ -24,6 +25,7 @@ class _AddReminderScreenState extends ConsumerState<AddReminderScreen> {
   final _customLabelCtrl = TextEditingController();
   final _customOffsetCtrl = TextEditingController();
   Set<int> _offsets = {56, 28, 7};
+  int _notifyOffsetKm = 0;
   bool _loaded = false;
   bool _saving = false;
 
@@ -132,6 +134,7 @@ class _AddReminderScreenState extends ConsumerState<AddReminderScreen> {
           customLabel: Value(customLabel),
           dueDate: _dueDate,
           dueMileage: Value(mileage),
+          notifyOffsetKm: Value(mileage != null ? _notifyOffsetKm : null),
           notifyOffsetsDays: Value(SettingsService.encodeOffsets(sortedOffsets)),
           createdAt: DateTime.now(),
         ),
@@ -139,7 +142,7 @@ class _AddReminderScreenState extends ConsumerState<AddReminderScreen> {
 
       if (hasPermission && sortedOffsets.isNotEmpty) {
         final svc = NotificationService();
-        final title = customLabel ?? _type.displayName;
+        final title = reminderLabel(_type, customLabel: customLabel);
         for (var i = 0; i < sortedOffsets.length; i++) {
           final days = sortedOffsets[i];
           final when = _dueDate.subtract(Duration(days: days));
@@ -246,7 +249,38 @@ class _AddReminderScreenState extends ConsumerState<AddReminderScreen> {
               suffixText: 'km',
               helperText: 'Falls die Wartung auch vom Kilometerstand abhängt',
             ),
+            onChanged: (_) => setState(() {}),
           ),
+          if (_mileageCtrl.text.isNotEmpty) ...[
+            const SizedBox(height: 16),
+            Text(
+              'km-Vorwarnung',
+              style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'Benachrichtigung X km vor dem Fälligkeits-Kilometerstand',
+              style: Theme.of(context)
+                  .textTheme
+                  .bodySmall
+                  ?.copyWith(color: cs.outline),
+            ),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 8,
+              runSpacing: 4,
+              children: [
+                for (final km in [0, 500, 1000, 2000, 5000])
+                  ChoiceChip(
+                    label: Text(km == 0 ? 'Genau bei Fälligkeit' : '$km km vorher'),
+                    selected: _notifyOffsetKm == km,
+                    onSelected: (_) => setState(() => _notifyOffsetKm = km),
+                  ),
+              ],
+            ),
+          ],
           const SizedBox(height: 24),
           Text('Benachrichtigungen',
               style: Theme.of(context).textTheme.titleMedium?.copyWith(

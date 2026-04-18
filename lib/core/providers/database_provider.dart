@@ -36,6 +36,17 @@ final consumablesRepositoryProvider = Provider((ref) {
   return ConsumablesRepository(db);
 });
 
+/// Fuel entries repository provider
+final fuelEntriesRepositoryProvider = Provider((ref) {
+  final db = ref.watch(databaseProvider);
+  return FuelEntriesRepository(db);
+});
+
+/// Reactive vehicle stream — updates everywhere when mileage or other fields change
+final vehicleStreamProvider = StreamProvider.family<Vehicle?, int>((ref, vehicleId) {
+  return ref.read(vehiclesRepositoryProvider).watchVehicleById(vehicleId);
+});
+
 // ============================================================================
 // REPOSITORY CLASSES
 // ============================================================================
@@ -57,6 +68,9 @@ class VehiclesRepository {
 
   Stream<List<Vehicle>> watchVehiclesByUser(int userId) =>
       db.watchVehiclesByUser(userId);
+
+  Stream<Vehicle?> watchVehicleById(int vehicleId) =>
+      db.watchVehicleById(vehicleId);
 
   Future<Vehicle?> getVehicleById(int vehicleId) =>
       db.getVehicleById(vehicleId);
@@ -89,6 +103,9 @@ class RemindersRepository {
 
   Future<void> markReminderNotified(int reminderId) =>
       db.markReminderNotified(reminderId);
+
+  Future<List<Reminder>> getKmRemindersToCheck(int vehicleId) =>
+      db.getKmRemindersToCheck(vehicleId);
 }
 
 class MaintenanceHistoryRepository {
@@ -120,4 +137,17 @@ class ConsumablesRepository {
 
   Future<bool> updateConsumables(ConsumablesTableCompanion consumables) =>
       db.updateConsumables(consumables);
+}
+
+class FuelEntriesRepository {
+  final AppDatabase db;
+  FuelEntriesRepository(this.db);
+
+  Stream<List<FuelEntry>> watchFuelEntriesByVehicle(int vehicleId) =>
+      db.watchFuelEntriesByVehicle(vehicleId);
+
+  Future<int> insertFuelEntry(FuelEntriesCompanion entry) =>
+      db.insertFuelEntry(entry);
+
+  Future<int> deleteFuelEntry(int id) => db.deleteFuelEntry(id);
 }

@@ -2,8 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import 'package:drift/drift.dart' show Value;
+import '../../core/l10n/reminder_labels.dart';
 import '../../core/providers/database_provider.dart';
 import '../../services/database/database.dart';
+
 import '../../services/models/enums.dart';
 import '../../services/notification_service.dart';
 
@@ -12,9 +15,6 @@ final _remindersProvider = StreamProvider.family<List<Reminder>, int>(
       ref.read(remindersRepositoryProvider).watchRemindersByVehicle(vehicleId),
 );
 
-final _vehicleProvider = FutureProvider.family<Vehicle?, int>(
-  (ref, id) => ref.read(vehiclesRepositoryProvider).getVehicleById(id),
-);
 
 class RemindersScreen extends ConsumerWidget {
   final int vehicleId;
@@ -23,7 +23,7 @@ class RemindersScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final remindersAsync = ref.watch(_remindersProvider(vehicleId));
-    final vehicleAsync = ref.watch(_vehicleProvider(vehicleId));
+    final vehicleAsync = ref.watch(vehicleStreamProvider(vehicleId));
 
     return Scaffold(
       appBar: AppBar(
@@ -105,6 +105,7 @@ class RemindersScreen extends ConsumerWidget {
           MaintenanceHistoryTableCompanion.insert(
             vehicleId: reminder.vehicleId,
             type: reminder.type,
+            customLabel: Value(reminder.customLabel),
             completedDate: DateTime.now(),
             mileageAtCompletion: currentMileage,
           ),
@@ -164,12 +165,8 @@ class RemindersScreen extends ConsumerWidget {
     );
   }
 
-  String _typeLabel(Reminder r) {
-    if (r.customLabel != null && r.customLabel!.isNotEmpty) {
-      return r.customLabel!;
-    }
-    return ReminderType.fromString(r.type).displayName;
-  }
+  String _typeLabel(Reminder r) =>
+      reminderLabel(ReminderType.fromString(r.type), customLabel: r.customLabel);
 }
 
 class _EmptyState extends StatelessWidget {
@@ -225,10 +222,7 @@ class _ReminderCard extends StatelessWidget {
     final daysLeft = due.difference(today).inDays;
     final overdue = daysLeft < 0;
     final soon = daysLeft >= 0 && daysLeft <= 14;
-    final label = (reminder.customLabel != null &&
-            reminder.customLabel!.isNotEmpty)
-        ? reminder.customLabel!
-        : type.displayName;
+    final label = reminderLabel(type, customLabel: reminder.customLabel);
 
     final statusColor = overdue
         ? cs.error
@@ -262,10 +256,9 @@ class _ReminderCard extends StatelessWidget {
                   if (reminder.dueMileage != null) ...[
                     const SizedBox(height: 2),
                     Text(
-                      'Bei ${_formatKm(reminder.dueMileage!)} km '
-                      '(aktuell ${_formatKm(currentMileage)} km)',
+                      _kmLabel(reminder, currentMileage),
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: cs.outline,
+                            color: _kmColor(reminder, currentMileage, cs),
                           ),
                     ),
                   ],
@@ -286,6 +279,24 @@ class _ReminderCard extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  String _kmLabel(Reminder r, int currentKm) {
+    final due = r.dueMileage!;
+    final offset = r.notifyOffsetKm ?? 0;
+    final kmLeft = due - currentKm;
+    if (kmLeft <= 0) return 'Km-Fälligkeit erreicht! (${_formatKm(due)} km)';
+    final base = 'Bei ${_formatKm(due)} km · noch $kmLeft km (jetzt ${_formatKm(currentKm)} km)';
+    return offset > 0 ? '$base · Warnung ab ${_formatKm(due - offset)} km' : base;
+  }
+
+  Color _kmColor(Reminder r, int currentKm, ColorScheme cs) {
+    final due = r.dueMileage!;
+    final offset = r.notifyOffsetKm ?? 0;
+    final kmLeft = due - currentKm;
+    if (kmLeft <= 0) return cs.error;
+    if (kmLeft <= offset || kmLeft <= 1000) return cs.tertiary;
+    return cs.outline;
   }
 
   String _dateLabel(DateTime due, int daysLeft, bool overdue) {

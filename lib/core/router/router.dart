@@ -19,6 +19,7 @@ import '../../features/workshop_report/workshop_report_screen.dart';
 import '../../features/breakdown/breakdown_screen.dart';
 import '../../features/breakdown/garage_finder_screen.dart';
 import '../../features/settings/settings_screen.dart';
+import '../../features/fuel/fuel_screen.dart';
 import '../../services/models/enums.dart';
 
 final goRouterProvider = Provider<GoRouter>((ref) {
@@ -131,6 +132,13 @@ final goRouterProvider = Provider<GoRouter>((ref) {
             builder: (_, state) {
               final id = int.parse(state.pathParameters['id']!);
               return BreakdownScreen(vehicleId: id);
+            },
+          ),
+          GoRoute(
+            path: 'fuel',
+            builder: (_, state) {
+              final id = int.parse(state.pathParameters['id']!);
+              return FuelScreen(vehicleId: id);
             },
           ),
           GoRoute(

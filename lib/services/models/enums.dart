@@ -17,16 +17,15 @@ enum SkillLevel {
 
 /// Types of maintenance reminders
 enum ReminderType {
-  oilChange('oil_change', 'Oil Change'),
-  tuev('tuev', 'TÜV/MOT'),
-  majorService('major_service', 'Major Service'),
-  minorService('minor_service', 'Minor Service'),
-  tyreSwap('tyre_swap', 'Seasonal Tyre Swap'),
-  custom('custom', 'Custom');
+  oilChange('oil_change'),
+  tuev('tuev'),
+  majorService('major_service'),
+  minorService('minor_service'),
+  tyreSwap('tyre_swap'),
+  custom('custom');
 
   final String dbValue;
-  final String displayName;
-  const ReminderType(this.dbValue, this.displayName);
+  const ReminderType(this.dbValue);
 
   factory ReminderType.fromString(String value) {
     return ReminderType.values.firstWhere(

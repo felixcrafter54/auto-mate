@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import '../../core/l10n/reminder_labels.dart';
 import '../../core/providers/database_provider.dart';
 import '../../services/database/database.dart';
 import '../../services/models/enums.dart';
@@ -131,8 +132,10 @@ class _HistoryCard extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(type.displayName,
-                      style: const TextStyle(fontWeight: FontWeight.bold)),
+                  Text(
+                    reminderLabel(type, customLabel: entry.customLabel),
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
                   const SizedBox(height: 2),
                   Text('Erledigt am ${fmt.format(entry.completedDate)}'),
                   Text('Kilometerstand: ${_km(entry.mileageAtCompletion)} km',
