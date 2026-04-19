@@ -1,3 +1,4 @@
+import 'package:auto_mate/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -16,17 +17,18 @@ class VehicleDetailScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l = AppLocalizations.of(context);
     final vehicleAsync = ref.watch(vehicleStreamProvider(vehicleId));
 
     return vehicleAsync.when(
       loading: () => const Scaffold(
         body: Center(child: CircularProgressIndicator()),
       ),
-      error: (e, _) => Scaffold(body: Center(child: Text('Fehler: $e'))),
+      error: (e, _) => Scaffold(body: Center(child: Text(l.commonError(e.toString())))),
       data: (vehicle) {
         if (vehicle == null) {
-          return const Scaffold(
-            body: Center(child: Text('Fahrzeug nicht gefunden.')),
+          return Scaffold(
+            body: Center(child: Text(l.vehicleDetailNotFound)),
           );
         }
         return _VehicleDetailView(vehicle: vehicle);
@@ -41,6 +43,7 @@ class _VehicleDetailView extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l = AppLocalizations.of(context);
     final fuelType = FuelType.fromString(vehicle.fuelType);
     final skill = ref.watch(skillLevelProvider);
     final cs = Theme.of(context).colorScheme;
@@ -50,7 +53,7 @@ class _VehicleDetailView extends ConsumerWidget {
         title: Text('${vehicle.make} ${vehicle.model}'),
         actions: [
           PopupMenuButton<String>(
-            tooltip: 'Weitere Aktionen',
+            tooltip: l.vehicleDetailMoreActions,
             onSelected: (v) {
               switch (v) {
                 case 'mileage':
@@ -59,21 +62,21 @@ class _VehicleDetailView extends ConsumerWidget {
                   _confirmDelete(context, ref, vehicle);
               }
             },
-            itemBuilder: (_) => const [
+            itemBuilder: (_) => [
               PopupMenuItem(
                 value: 'mileage',
                 child: ListTile(
-                  leading: Icon(Icons.speed),
-                  title: Text('Kilometerstand aktualisieren'),
+                  leading: const Icon(Icons.speed),
+                  title: Text(l.vehicleDetailUpdateMileage),
                   contentPadding: EdgeInsets.zero,
                 ),
               ),
               PopupMenuItem(
                 value: 'delete',
                 child: ListTile(
-                  leading: Icon(Icons.delete_outline, color: Colors.red),
-                  title: Text('Fahrzeug löschen',
-                      style: TextStyle(color: Colors.red)),
+                  leading: const Icon(Icons.delete_outline, color: Colors.red),
+                  title: Text(l.vehicleDetailDeleteVehicle,
+                      style: const TextStyle(color: Colors.red)),
                   contentPadding: EdgeInsets.zero,
                 ),
               ),
@@ -113,7 +116,7 @@ class _VehicleDetailView extends ConsumerWidget {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          fuelTypeLabel(fuelType),
+                          fuelTypeLabel(l, fuelType),
                           style: Theme.of(context).textTheme.bodyMedium,
                         ),
                       ],
@@ -132,68 +135,68 @@ class _VehicleDetailView extends ConsumerWidget {
           ),
           const SizedBox(height: 20),
 
-          _SectionTitle('Wartung'),
+          _SectionTitle(l.vehicleDetailSectionMaintenance),
           const SizedBox(height: 8),
           if (fuelType.supportsFuelLog)
             _ActionTile(
               icon: Icons.local_gas_station,
               iconColor: cs.primary,
-              title: 'Tanken & Verbrauch',
-              subtitle: 'Tankfüllungen eintragen · Verbrauch berechnen',
+              title: l.vehicleDetailFuelTitle,
+              subtitle: l.vehicleDetailFuelSubtitle,
               onTap: () => context.push('/vehicle/${vehicle.id}/fuel'),
             ),
           _ActionTile(
             icon: Icons.notifications_outlined,
             iconColor: cs.primary,
-            title: 'Erinnerungen',
-            subtitle: 'Fälligkeiten für Ölwechsel, TÜV, Inspektionen',
+            title: l.vehicleDetailRemindersTitle,
+            subtitle: l.vehicleDetailRemindersSubtitle,
             onTap: () => context.push('/vehicle/${vehicle.id}/reminders'),
           ),
           _ActionTile(
             icon: Icons.history,
             iconColor: cs.primary,
-            title: 'Wartungshistorie',
-            subtitle: 'Alle erledigten Arbeiten',
+            title: l.vehicleDetailHistoryTitle,
+            subtitle: l.vehicleDetailHistorySubtitle,
             onTap: () => context.push('/vehicle/${vehicle.id}/history'),
           ),
           _ActionTile(
             icon: Icons.oil_barrel_outlined,
             iconColor: cs.primary,
-            title: 'Verbrauchsmaterial',
-            subtitle: 'Öl, Kühlmittel, Bremsflüssigkeit — zum Kopieren',
+            title: l.vehicleDetailConsumablesTitle,
+            subtitle: l.vehicleDetailConsumablesSubtitle,
             onTap: () => context.push('/vehicle/${vehicle.id}/consumables'),
           ),
           const SizedBox(height: 20),
 
-          _SectionTitle('Reparatur & Pannen'),
+          _SectionTitle(l.vehicleDetailSectionRepair),
           const SizedBox(height: 8),
           if (skill != SkillLevel.beginner)
             _ActionTile(
               icon: Icons.play_circle_outline,
               iconColor: cs.secondary,
-              title: 'Reparatur-Tutorials',
-              subtitle: 'YouTube-Videos für dein Modell',
+              title: l.vehicleDetailTutorialsTitle,
+              subtitle: l.vehicleDetailTutorialsSubtitle,
               onTap: () => context.push('/vehicle/${vehicle.id}/tutorials'),
             ),
           _ActionTile(
             icon: Icons.description_outlined,
             iconColor: cs.secondary,
-            title: 'Werkstattbericht',
-            subtitle: 'KI erstellt PDF-Diagnose für den Mechaniker',
+            title: l.vehicleDetailReportTitle,
+            subtitle: l.vehicleDetailReportSubtitle,
             onTap: () => context.push('/vehicle/${vehicle.id}/report'),
           ),
           _ActionTile(
             icon: Icons.mic_outlined,
             iconColor: cs.error,
-            title: 'Pannen-Assistent',
-            subtitle: 'KI-Chat für unterwegs · Sprachsteuerung',
+            title: l.vehicleDetailBreakdownTitle,
+            subtitle: l.vehicleDetailBreakdownSubtitle,
             onTap: () => context.push('/vehicle/${vehicle.id}/breakdown'),
           ),
           _ActionTile(
             icon: Icons.location_on_outlined,
             iconColor: cs.error,
-            title: 'Werkstatt finden',
-            subtitle: 'Karten-basierte Suche in deiner Nähe',
+            title: l.vehicleDetailGaragesTitle,
+            subtitle: l.vehicleDetailGaragesSubtitle,
             onTap: () => context.push('/vehicle/${vehicle.id}/garages'),
           ),
           const SizedBox(height: 20),
@@ -210,73 +213,79 @@ class _VehicleDetailView extends ConsumerWidget {
 
   Future<void> _editMileage(
       BuildContext context, WidgetRef ref, Vehicle vehicle) async {
+    final l = AppLocalizations.of(context);
     final controller = TextEditingController(text: '${vehicle.currentMileage}');
     final result = await showDialog<int>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Kilometerstand aktualisieren'),
-        content: TextField(
-          controller: controller,
-          autofocus: true,
-          keyboardType: TextInputType.number,
-          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-          decoration: const InputDecoration(
-            labelText: 'Aktueller Kilometerstand',
-            suffixText: 'km',
-            border: OutlineInputBorder(),
+      builder: (ctx) {
+        final lCtx = AppLocalizations.of(ctx);
+        return AlertDialog(
+          title: Text(lCtx.vehicleDetailUpdateMileageTitle),
+          content: TextField(
+            controller: controller,
+            autofocus: true,
+            keyboardType: TextInputType.number,
+            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+            decoration: InputDecoration(
+              labelText: lCtx.vehicleDetailCurrentMileageLabel,
+              suffixText: 'km',
+              border: const OutlineInputBorder(),
+            ),
           ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('Abbrechen'),
-          ),
-          FilledButton(
-            onPressed: () {
-              final v = int.tryParse(controller.text.trim());
-              if (v == null || v < 0) return;
-              Navigator.pop(ctx, v);
-            },
-            child: const Text('Speichern'),
-          ),
-        ],
-      ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: Text(lCtx.commonCancel),
+            ),
+            FilledButton(
+              onPressed: () {
+                final v = int.tryParse(controller.text.trim());
+                if (v == null || v < 0) return;
+                Navigator.pop(ctx, v);
+              },
+              child: Text(lCtx.commonSave),
+            ),
+          ],
+        );
+      },
     );
 
     if (result == null) return;
     await ref.read(vehiclesRepositoryProvider).updateMileage(vehicle.id, result);
-    await checkKmReminders(ref.read(databaseProvider), vehicle.id, result);
+    await checkKmReminders(ref.read(databaseProvider), vehicle.id, result, l);
     if (!context.mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Kilometerstand auf ${_formatKm(result)} km aktualisiert')),
+      SnackBar(content: Text(l.vehicleDetailMileageUpdated(_formatKm(result)))),
     );
   }
 
   Future<void> _confirmDelete(
       BuildContext context, WidgetRef ref, Vehicle vehicle) async {
+    final l = AppLocalizations.of(context);
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Fahrzeug löschen?'),
-        content: Text(
-          '${vehicle.year} ${vehicle.make} ${vehicle.model} und alle zugehörigen '
-          'Erinnerungen, Historien­einträge und Verbrauchsmaterial-Specs werden '
-          'unwiderruflich entfernt.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Abbrechen'),
+      builder: (ctx) {
+        final lCtx = AppLocalizations.of(ctx);
+        return AlertDialog(
+          title: Text(lCtx.vehicleDetailDeleteTitle),
+          content: Text(
+            lCtx.vehicleDetailDeleteBody(vehicle.year, vehicle.make, vehicle.model),
           ),
-          FilledButton(
-            style: FilledButton.styleFrom(
-              backgroundColor: Theme.of(ctx).colorScheme.error,
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: Text(lCtx.commonCancel),
             ),
-            onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Löschen'),
-          ),
-        ],
-      ),
+            FilledButton(
+              style: FilledButton.styleFrom(
+                backgroundColor: Theme.of(ctx).colorScheme.error,
+              ),
+              onPressed: () => Navigator.pop(ctx, true),
+              child: Text(lCtx.commonDelete),
+            ),
+          ],
+        );
+      },
     );
 
     if (confirmed != true) return;
@@ -294,7 +303,7 @@ class _VehicleDetailView extends ConsumerWidget {
 
     if (!context.mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Fahrzeug gelöscht')),
+      SnackBar(content: Text(l.vehicleDetailDeleted)),
     );
     context.go('/');
   }
@@ -317,6 +326,7 @@ class _InfoGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
     return GridView.count(
       crossAxisCount: 2,
       shrinkWrap: true,
@@ -327,7 +337,7 @@ class _InfoGrid extends StatelessWidget {
       children: [
         _InfoTile(
           icon: Icons.speed,
-          label: 'Kilometer',
+          label: l.vehicleDetailKmLabel,
           value: '${_formatKm(vehicle.currentMileage)} km',
           trailing: Icon(Icons.edit, size: 14,
               color: Theme.of(context).colorScheme.outline),
@@ -335,13 +345,13 @@ class _InfoGrid extends StatelessWidget {
         ),
         _InfoTile(
           icon: Icons.calendar_today,
-          label: 'Baujahr',
+          label: l.vehicleDetailYearLabel,
           value: '${vehicle.year}',
         ),
         if (vehicle.vin != null)
           _InfoTile(
             icon: Icons.qr_code,
-            label: 'VIN',
+            label: l.vehicleDetailVinLabel,
             value: vehicle.vin!,
           ),
       ],

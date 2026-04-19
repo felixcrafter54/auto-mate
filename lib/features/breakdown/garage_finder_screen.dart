@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:auto_mate/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:geolocator/geolocator.dart';
@@ -14,13 +15,13 @@ class GarageFinderScreen extends StatefulWidget {
 }
 
 class _Garage {
-  final String name;
+  final String? name;
   final LatLng position;
   final String? address;
   final String? phone;
   final String? website;
   const _Garage({
-    required this.name,
+    this.name,
     required this.position,
     this.address,
     this.phone,
@@ -100,7 +101,7 @@ out center 40;
       for (final raw in elements) {
         final el = raw as Map<String, dynamic>;
         final tags = (el['tags'] as Map?)?.cast<String, dynamic>() ?? {};
-        final name = tags['name'] as String? ?? 'Werkstatt';
+        final name = tags['name'] as String?;
         final lat = (el['lat'] ?? (el['center']?['lat'])) as num?;
         final lon = (el['lon'] ?? (el['center']?['lon'])) as num?;
         if (lat == null || lon == null) continue;
@@ -133,8 +134,9 @@ out center 40;
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
     return Scaffold(
-      appBar: AppBar(title: const Text('Werkstätten in der Nähe')),
+      appBar: AppBar(title: Text(l.garageFinderTitle)),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : _error != null
@@ -181,13 +183,13 @@ out center 40;
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            '${_garages.length} Werkstätten gefunden',
+                            l.garageFinderFound(_garages.length),
                             style: Theme.of(context).textTheme.titleSmall,
                           ),
                           if (_usedFallback) ...[
                             const SizedBox(height: 2),
                             Text(
-                              'Kein Standort verfügbar — Suche um Deutschland-Mitte.',
+                              l.garageFinderNoLocation,
                               style: Theme.of(context)
                                   .textTheme
                                   .bodySmall
@@ -226,10 +228,11 @@ class _GarageTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
     final subtitle = [garage.address, garage.phone].whereType<String>().join(' · ');
     return ListTile(
       leading: const CircleAvatar(child: Icon(Icons.build_outlined)),
-      title: Text(garage.name),
+      title: Text(garage.name ?? l.garageFinderDefault),
       subtitle: subtitle.isEmpty ? null : Text(subtitle),
       trailing: Wrap(
         spacing: 4,

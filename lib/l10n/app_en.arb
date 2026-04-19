@@ -1,0 +1,520 @@
+{
+  "@@locale": "en",
+
+  "appTitle": "AutoMate",
+
+  "commonSave": "Save",
+  "commonSaving": "Saving…",
+  "commonCancel": "Cancel",
+  "commonDelete": "Delete",
+  "commonBack": "Back",
+  "commonEdit": "Edit",
+  "commonAdd": "Add",
+  "commonError": "Error: {error}",
+  "@commonError": {
+    "placeholders": { "error": { "type": "String" } }
+  },
+  "commonNoVehicle": "No vehicle",
+
+  "fuelTypePetrol": "Petrol",
+  "fuelTypeDiesel": "Diesel",
+  "fuelTypeElectric": "Electric",
+  "fuelTypeHybrid": "Hybrid",
+  "fuelTypeOther": "Other",
+
+  "fuelGradeSuperE5": "Super E5 (95)",
+  "fuelGradeSuperE10": "Super E10 (95)",
+  "fuelGradeSuperPlus": "Super Plus (98)",
+  "fuelGradePremium": "Premium (100)",
+  "fuelGradeDieselB7": "Diesel B7",
+  "fuelGradeDieselPremium": "Premium Diesel",
+
+  "reminderTypeOilChange": "Oil change",
+  "reminderTypeTuev": "MOT / annual inspection",
+  "reminderTypeMajorService": "Major service",
+  "reminderTypeMinorService": "Minor service",
+  "reminderTypeTyreSwap": "Tyre swap",
+  "reminderTypeCustom": "Other",
+
+  "skillLevelBeginner": "Beginner",
+  "skillLevelIntermediate": "Intermediate",
+  "skillLevelPro": "Pro",
+
+  "onboardingWelcomeTitle": "Welcome to\nAutoMate",
+  "onboardingWelcomeSubtitle": "Your companion for maintenance,\nrepairs and breakdowns.",
+  "onboardingNameLabel": "Your name",
+  "onboardingNameError": "Please enter your name",
+  "onboardingStartButton": "Let's go",
+  "onboardingStartingButton": "Just a moment…",
+
+  "skillQuizIntro": "So AutoMate can give you the right recommendations, answer 5 quick questions. Takes less than a minute.",
+  "skillQuizProgress": "Question {current} of {total}",
+  "@skillQuizProgress": {
+    "placeholders": {
+      "current": { "type": "int" },
+      "total": { "type": "int" }
+    }
+  },
+  "skillQuizNext": "Next",
+  "skillQuizEvaluate": "Evaluate",
+  "skillQuizHello": "Hello, {firstName}!",
+  "@skillQuizHello": {
+    "placeholders": { "firstName": { "type": "String" } }
+  },
+  "skillQuizHelloGeneric": "Hello!",
+
+  "skillQuiz1Question": "A warning light comes on. What do you do?",
+  "skillQuiz1Answer1": "Head straight to the garage — better safe than sorry.",
+  "skillQuiz1Answer2": "I look up the meaning and decide myself.",
+  "skillQuiz1Answer3": "I read the fault code with an OBD device and analyse it.",
+
+  "skillQuiz2Question": "When do you check the engine oil level yourself?",
+  "skillQuiz2Answer1": "Never — the garage handles that at the next service.",
+  "skillQuiz2Answer2": "Occasionally, before long trips or when I think of it.",
+  "skillQuiz2Answer3": "Regularly — I know my engine's typical oil consumption precisely.",
+
+  "skillQuiz3Question": "Have you ever worked on your car yourself?",
+  "skillQuiz3Answer1": "No, I always leave that to the professionals.",
+  "skillQuiz3Answer2": "Yes, simple things like wipers, bulbs or air filter.",
+  "skillQuiz3Answer3": "Yes, including complex jobs — e.g. brakes, clutch or suspension.",
+
+  "skillQuiz4Question": "Your car makes an unfamiliar noise. What do you do first?",
+  "skillQuiz4Answer1": "Call the garage — I don't want to take any risks.",
+  "skillQuiz4Answer2": "I try to describe the noise and search online for causes.",
+  "skillQuiz4Answer3": "I systematically locate the noise and check the affected components myself.",
+
+  "skillQuiz5Question": "How familiar are you with your car's engine bay?",
+  "skillQuiz5Answer1": "I only open the bonnet to top up the windscreen washer.",
+  "skillQuiz5Answer2": "I know the main parts and regularly check oil and coolant levels.",
+  "skillQuiz5Answer3": "I know the layout and function and can replace many parts independently.",
+
+  "skillResultTitle": "Your skill level:",
+  "skillResultBeginnerDesc": "You rely on professionals — that's smart and safe. AutoMate gives you clear hints about when to visit a garage, and explains everything in plain language without jargon.",
+  "skillResultBeginnerFeatures": "Garage recommendations, simple explanations",
+  "skillResultIntermediateDesc": "You know your car well and like to get stuck in. AutoMate shows you suitable repair tutorials and helps you find the right parts — step by step.",
+  "skillResultIntermediateFeatures": "Tutorials, DIY with guidance",
+  "skillResultProDesc": "You know exactly what happens under the bonnet. AutoMate delivers technical details, raw fault codes and full control — without dumbing things down.",
+  "skillResultProFeatures": "Technical details, OBD data, full control",
+  "skillResultFitsQuestion": "Does that fit you, {firstName}?",
+  "@skillResultFitsQuestion": {
+    "placeholders": { "firstName": { "type": "String" } }
+  },
+  "skillResultFitsQuestionNoName": "Does that fit you?",
+  "skillResultYes": "Yes, that fits!",
+  "skillResultNo": "No, I'd like to adjust it",
+  "skillResultSelectLevel": "Choose your level",
+  "skillResultAdjustLater": "You can adjust it at any time in your profile.",
+
+  "dashboardTitle": "AutoMate",
+  "dashboardAddVehicle": "Add vehicle",
+  "dashboardNoVehicle": "No vehicle yet",
+  "dashboardNoVehicleHint": "Add your first vehicle.",
+
+  "vehicleSetupTitle": "Add vehicle",
+  "vehicleSetupSectionData": "Vehicle data",
+  "vehicleSetupSectionHint": "Basic details about your car. No VIN? No problem — it's optional.",
+  "vehicleSetupYear": "Year *",
+  "vehicleSetupMake": "Make *",
+  "vehicleSetupMakePlaceholder": "e.g. Ford, Toyota, BMW",
+  "vehicleSetupMakeLoading": "Loading…",
+  "vehicleSetupModelDisabled": "Model * (select make first)",
+  "vehicleSetupModel": "Model *",
+  "vehicleSetupModelPlaceholder": "e.g. Golf, Corolla, 3 Series",
+  "vehicleSetupVin": "VIN (optional)",
+  "vehicleSetupVinHint": "17-digit VIN, found in your registration document",
+  "vehicleSetupFuel": "Fuel *",
+  "vehicleSetupMileage": "Current mileage *",
+  "vehicleSetupAnnualKm": "Estimated km per year (optional)",
+  "vehicleSetupAnnualKmHint": "Helps calculate maintenance intervals",
+  "vehicleSetupAnnualKmSuffix": "km/year",
+  "vehicleSetupSaveButton": "Save vehicle",
+  "vehicleSetupSavingButton": "Saving…",
+
+  "vehicleDetailMoreActions": "More actions",
+  "vehicleDetailNotFound": "Vehicle not found.",
+  "vehicleDetailUpdateMileage": "Update mileage",
+  "vehicleDetailDeleteVehicle": "Delete vehicle",
+  "vehicleDetailSectionMaintenance": "Maintenance",
+  "vehicleDetailFuelTitle": "Fuel & Consumption",
+  "vehicleDetailFuelSubtitle": "Log fill-ups · calculate consumption",
+  "vehicleDetailRemindersTitle": "Reminders",
+  "vehicleDetailRemindersSubtitle": "Due dates for oil change, MOT, services",
+  "vehicleDetailHistoryTitle": "Maintenance history",
+  "vehicleDetailHistorySubtitle": "All completed work",
+  "vehicleDetailConsumablesTitle": "Consumables",
+  "vehicleDetailConsumablesSubtitle": "Oil, coolant, brake fluid — copy to clipboard",
+  "vehicleDetailSectionRepair": "Repairs & breakdowns",
+  "vehicleDetailTutorialsTitle": "Repair tutorials",
+  "vehicleDetailTutorialsSubtitle": "YouTube videos for your model",
+  "vehicleDetailReportTitle": "Workshop report",
+  "vehicleDetailReportSubtitle": "AI-generated PDF diagnosis for your mechanic",
+  "vehicleDetailBreakdownTitle": "Breakdown assistant",
+  "vehicleDetailBreakdownSubtitle": "AI chat on the road · voice control",
+  "vehicleDetailGaragesTitle": "Find a garage",
+  "vehicleDetailGaragesSubtitle": "Map-based search near you",
+  "vehicleDetailUpdateMileageTitle": "Update mileage",
+  "vehicleDetailCurrentMileageLabel": "Current mileage",
+  "vehicleDetailDeleteTitle": "Delete vehicle?",
+  "vehicleDetailDeleteBody": "{year} {make} {model} and all associated reminders, history entries and consumable specs will be permanently removed.",
+  "@vehicleDetailDeleteBody": {
+    "placeholders": {
+      "year": { "type": "int" },
+      "make": { "type": "String" },
+      "model": { "type": "String" }
+    }
+  },
+  "vehicleDetailMileageUpdated": "Mileage updated to {km} km",
+  "@vehicleDetailMileageUpdated": {
+    "placeholders": { "km": { "type": "String" } }
+  },
+  "vehicleDetailDeleted": "Vehicle deleted",
+  "vehicleDetailKmLabel": "Mileage",
+  "vehicleDetailYearLabel": "Year",
+  "vehicleDetailVinLabel": "VIN",
+
+  "fuelScreenTitle": "Fuel & Consumption",
+  "fuelScreenAddButton": "Add fuel",
+  "fuelScreenAllEntries": "All fuel entries",
+  "fuelScreenEmptyTitle": "No fuel entries yet",
+  "fuelScreenEmptyBody": "Add your first fill-up\nto start calculating consumption.",
+  "fuelScreenNotAvailableTitle": "Not available",
+  "fuelScreenNotAvailableBody": "The fuel log is only available for petrol, diesel and hybrid vehicles.",
+  "fuelScreenStatConsumption": "Avg consumption",
+  "fuelScreenStatKmPerYear": "Avg km/year",
+  "fuelScreenStatTotalCost": "Total cost",
+  "fuelScreenDeleteTitle": "Delete entry?",
+  "fuelSheetTitle": "Add fill-up",
+  "fuelSheetFieldGrade": "Fuel grade",
+  "fuelSheetFieldLiters": "Litres filled",
+  "fuelSheetFieldTotalPrice": "Total price",
+  "fuelSheetFieldOdometer": "Odometer at fill-up",
+  "fuelSheetFullTankLabel": "Full tank",
+  "fuelSheetFullTankHint": "For precise consumption calculation",
+  "fuelSheetSave": "Save",
+  "fuelSheetSaving": "Saving…",
+
+  "remindersTitle": "Reminders",
+  "remindersNew": "New",
+  "remindersEmpty": "No reminders",
+  "remindersEmptyHint": "Add a reminder for oil change, MOT and more.",
+  "remindersMarkDone": "Mark as done",
+  "remindersMarkDoneConfirm": "Mark \"{label}\" as done?",
+  "@remindersMarkDoneConfirm": {
+    "placeholders": { "label": { "type": "String" } }
+  },
+  "remindersMarkedDone": "Marked as done",
+  "remindersDeleteTitle": "Delete reminder?",
+  "remindersDeleteBody": "The reminder \"{label}\" and all associated notifications will be removed.",
+  "@remindersDeleteBody": {
+    "placeholders": { "label": { "type": "String" } }
+  },
+  "remindersDeleted": "Reminder deleted",
+  "remindersOverdue": "{days} days overdue",
+  "@remindersOverdue": {
+    "placeholders": { "days": { "type": "int" } }
+  },
+  "remindersDueToday": "Due today!",
+  "remindersDueTomorrow": "Due tomorrow",
+  "remindersDueInDays": "In {days} days · {date}",
+  "@remindersDueInDays": {
+    "placeholders": {
+      "days": { "type": "int" },
+      "date": { "type": "String" }
+    }
+  },
+  "remindersDueInWeeks": "In {weeks} weeks · {date}",
+  "@remindersDueInWeeks": {
+    "placeholders": {
+      "weeks": { "type": "int" },
+      "date": { "type": "String" }
+    }
+  },
+  "remindersKmOverdue": "Km threshold reached! ({km} km)",
+  "@remindersKmOverdue": {
+    "placeholders": { "km": { "type": "String" } }
+  },
+  "remindersKmDueAt": "At {due} km · {kmLeft} km left (now {current} km)",
+  "@remindersKmDueAt": {
+    "placeholders": {
+      "due": { "type": "String" },
+      "kmLeft": { "type": "String" },
+      "current": { "type": "String" }
+    }
+  },
+  "remindersKmWithWarning": "{base} · warning from {km} km",
+  "@remindersKmWithWarning": {
+    "placeholders": {
+      "base": { "type": "String" },
+      "km": { "type": "String" }
+    }
+  },
+
+  "addReminderTitle": "New reminder",
+  "addReminderTypeLabel": "Maintenance type",
+  "addReminderCustomLabel": "Custom name",
+  "addReminderCustomPlaceholder": "e.g. Replace pollen filter",
+  "addReminderDueDateLabel": "Due date",
+  "addReminderDueDateHint": "Tap to change",
+  "addReminderDueMileageLabel": "Due at mileage (optional)",
+  "addReminderDueMileageHint": "If the maintenance also depends on mileage",
+  "addReminderKmOffsetLabel": "Km pre-warning",
+  "addReminderKmOffsetHint": "Notify this many km before the due mileage",
+  "addReminderAtDue": "Exactly at due date",
+  "addReminderKmBefore": "{km} km before",
+  "@addReminderKmBefore": {
+    "placeholders": { "km": { "type": "int" } }
+  },
+  "addReminderNotificationsLabel": "Notifications",
+  "addReminderNotificationsHint": "When would you like to be reminded before the due date?",
+  "addReminderCustomTimeLabel": "Custom time",
+  "addReminderDaysSuffix": "days",
+  "addReminderNoNotifications": "No notifications active — the reminder will only appear in the list.",
+  "addReminderSaveButton": "Create reminder",
+  "addReminderSavingButton": "Saving…",
+  "addReminderCustomNameError": "Please enter a name for the custom reminder.",
+  "addReminderNotificationsDisabledTitle": "Notifications disabled",
+  "addReminderNotificationsDisabledBody": "Without notifications AutoMate cannot remind you of upcoming maintenance. You can grant permission in the system settings.",
+  "addReminderSaveAnyway": "Save anyway",
+  "addReminderOpenSettings": "Open settings",
+  "addReminderDay": "1 day",
+  "addReminderDays": "{days} days",
+  "@addReminderDays": {
+    "placeholders": { "days": { "type": "int" } }
+  },
+  "addReminderWeek": "1 week",
+  "addReminderWeeks": "{weeks} weeks",
+  "@addReminderWeeks": {
+    "placeholders": { "weeks": { "type": "int" } }
+  },
+  "addReminderNotifDay": "1 day until due.",
+  "addReminderNotifDays": "{days} days until due.",
+  "@addReminderNotifDays": {
+    "placeholders": { "days": { "type": "int" } }
+  },
+  "addReminderNotifWeek": "1 week until due.",
+  "addReminderNotifWeeks": "{weeks} weeks until due.",
+  "@addReminderNotifWeeks": {
+    "placeholders": { "weeks": { "type": "int" } }
+  },
+  "addReminderSaveFailed": "Save failed: {error}",
+  "@addReminderSaveFailed": {
+    "placeholders": { "error": { "type": "String" } }
+  },
+
+  "kmReminderBodyDue": "Maintenance due! Mileage threshold reached.",
+  "kmReminderBodyKmLeft": "{km} km until due.",
+  "@kmReminderBodyKmLeft": {
+    "placeholders": { "km": { "type": "int" } }
+  },
+
+  "historyTitle": "Maintenance history",
+  "historyEmpty": "No history yet",
+  "historyEmptyHint": "When you mark a reminder as done, it will appear here.",
+  "historyDeleteTitle": "Delete entry?",
+  "historyDeleteBody": "The entry will be permanently removed from the history.",
+  "historyDeleted": "Entry deleted",
+  "historyCompletedOn": "Completed on {date}",
+  "@historyCompletedOn": {
+    "placeholders": { "date": { "type": "String" } }
+  },
+  "historyMileageAt": "Mileage: {km} km",
+  "@historyMileageAt": {
+    "placeholders": { "km": { "type": "String" } }
+  },
+  "historyWorkshop": "Workshop: {name}",
+  "@historyWorkshop": {
+    "placeholders": { "name": { "type": "String" } }
+  },
+  "historyCost": "Cost: {amount} €",
+  "@historyCost": {
+    "placeholders": { "amount": { "type": "String" } }
+  },
+
+  "consumablesTitle": "Consumables",
+  "consumablesEmpty": "No specs yet",
+  "consumablesEmptyHint": "Add oil, coolant and brake fluid specs for your car so you have them ready at the garage.",
+  "consumablesAddButton": "Add specs",
+  "consumablesHintWithVehicle": "Specs for {year} {make} {model} — tap \"Copy\" to share with the garage.",
+  "@consumablesHintWithVehicle": {
+    "placeholders": {
+      "year": { "type": "int" },
+      "make": { "type": "String" },
+      "model": { "type": "String" }
+    }
+  },
+  "consumablesHintGeneral": "Specs for the garage — tap \"Copy\" to share.",
+  "consumablesEngineOil": "Engine oil",
+  "consumablesOilVolume": "Oil capacity",
+  "consumablesCoolant": "Coolant",
+  "consumablesBrakeFluid": "Brake fluid",
+  "consumablesTransmissionFluid": "Transmission fluid",
+  "consumablesCopyAll": "Copy all specs",
+  "consumablesCopied": "Specs copied to clipboard",
+  "consumablesEditTitle": "Edit specs",
+  "consumablesCreateTitle": "Add specs",
+  "consumablesOilGradeLabel": "Engine oil viscosity",
+  "consumablesOilGradePlaceholder": "e.g. 5W-30",
+  "consumablesOilVolumeLabel": "Oil capacity (litres)",
+  "consumablesOilVolumePlaceholder": "e.g. 4.5",
+  "consumablesCoolantLabel": "Coolant",
+  "consumablesCoolantPlaceholder": "e.g. G12++",
+  "consumablesBrakeFluidLabel": "Brake fluid",
+  "consumablesBrakeFluidPlaceholder": "e.g. DOT 4",
+  "consumablesTransFluidLabel": "Transmission fluid",
+  "consumablesTransFluidPlaceholder": "e.g. ATF 3+",
+  "consumablesCopyHeader": "AutoMate – {header}",
+  "@consumablesCopyHeader": {
+    "placeholders": { "header": { "type": "String" } }
+  },
+  "consumablesCopyOilGrade": "Engine oil: {value}",
+  "@consumablesCopyOilGrade": {
+    "placeholders": { "value": { "type": "String" } }
+  },
+  "consumablesCopyOilVolume": "Oil capacity: {value} l",
+  "@consumablesCopyOilVolume": {
+    "placeholders": { "value": { "type": "String" } }
+  },
+  "consumablesCopyCoolant": "Coolant: {value}",
+  "@consumablesCopyCoolant": {
+    "placeholders": { "value": { "type": "String" } }
+  },
+  "consumablesCopyBrakeFluid": "Brake fluid: {value}",
+  "@consumablesCopyBrakeFluid": {
+    "placeholders": { "value": { "type": "String" } }
+  },
+  "consumablesCopyTransFluid": "Transmission fluid: {value}",
+  "@consumablesCopyTransFluid": {
+    "placeholders": { "value": { "type": "String" } }
+  },
+
+  "settingsTitle": "Settings",
+  "settingsApiKeysSection": "API keys",
+  "settingsApiKeysHint": "Keys are stored locally on your device only. You need them to use the AI features and YouTube tutorials.",
+  "settingsGeminiKeyLabel": "Gemini API key (Google AI)",
+  "settingsGeminiKeyHint": "AIza…",
+  "settingsGeminiKeyLink": "Create key at Google AI Studio",
+  "settingsYouTubeKeyLabel": "YouTube Data API v3 key",
+  "settingsYouTubeKeyLink": "Create key at Google Cloud",
+  "settingsNotificationsSection": "Notifications",
+  "settingsNotificationsActive": "Notifications are active",
+  "settingsNotificationsDisabled": "Notifications are disabled",
+  "settingsNotificationsActiveHint": "You will receive reminders for upcoming maintenance.",
+  "settingsPwaNotificationsHint": "Only works while the PWA is open.",
+  "settingsNotificationsNoPermission": "Without permission AutoMate cannot remind you.",
+  "settingsAllowNotifications": "Allow",
+  "settingsSendTestNotification": "Send test notification",
+  "settingsScheduleTestNotification": "Schedule test in 2 minutes",
+  "settingsDefaultRemindersHint": "Default reminder times before due date. Can be overridden per reminder.",
+  "settingsReportSection": "Workshop report",
+  "settingsReportLanguageLabel": "Report language",
+  "settingsReportLanguageHint": "Useful if you break down abroad.",
+  "settingsSaveButton": "Save",
+  "settingsWebWarning": "You are using the web version. Voice assistant, OBD-II and camera scan only work in the mobile app.",
+  "settingsSaved": "Settings saved",
+  "settingsPermissionDenied": "Permission denied. Open system settings to allow it.",
+  "settingsPermissionError": "Notifications not allowed.",
+  "settingsNotificationsWork": "Notifications working.",
+  "settingsTestSent": "Test notification sent",
+  "settingsScheduledNotification": "Scheduled notification in 2 minutes.",
+  "settingsScheduledPwa": "Test in 2 min scheduled — keep the PWA open.",
+  "settingsScheduledMobile": "Test in 2 min scheduled.",
+  "settingsScheduleFailed": "Scheduling failed: {error}",
+  "@settingsScheduleFailed": {
+    "placeholders": { "error": { "type": "String" } }
+  },
+  "settingsLangDe": "German",
+  "settingsLangEn": "English",
+  "settingsLangFr": "French",
+  "settingsLangEs": "Spanish",
+  "settingsLangIt": "Italian",
+
+  "profileTitle": "PROFILE",
+  "profileName": "Name",
+  "profileMemberSince": "Member since",
+  "profileSkillLevel": "Skill level",
+  "profileMemberSinceDate": "Member since {date}",
+  "@profileMemberSinceDate": {
+    "placeholders": { "date": { "type": "String" } }
+  },
+  "profileSettingsSection": "SETTINGS",
+  "profileChangeSkillLevel": "Change skill level",
+  "profileApiAndLanguage": "API keys & language",
+  "profileApiAndLanguageHint": "Gemini, YouTube, report language",
+  "profileLogout": "Log out",
+  "profileChangeSkillLevelTitle": "Change skill level",
+  "profileChangeSkillLevelBody": "Do you really want to adjust your skill level?\nAutoMate will adapt all recommendations and explanations accordingly.",
+  "profileChangeSkillLevelYes": "Yes, adjust",
+  "profileSelectSkillLevel": "Choose your skill level",
+  "skillLevelBeginnerFeatures": "Garage recommendations, simple explanations",
+  "skillLevelIntermediateFeatures": "Tutorials, DIY with guidance",
+  "skillLevelProFeatures": "Technical details, full control",
+
+  "tutorialsTitle": "Repair tutorials",
+  "tutorialsNoVehicle": "No vehicle",
+  "tutorialsVehicleLabel": "For: {year} {make} {model}",
+  "@tutorialsVehicleLabel": {
+    "placeholders": {
+      "year": { "type": "int" },
+      "make": { "type": "String" },
+      "model": { "type": "String" }
+    }
+  },
+  "tutorialsSearchPlaceholder": "e.g. replace brakes, oil change, spark plugs",
+  "tutorialsBeginnerTip": "Beginner tip: For complex repairs, work with a garage.",
+  "tutorialsIntermediateTip": "Easy step-by-step videos for your level are preferred.",
+  "tutorialsProTip": "For you: search specific terms (e.g. \"replace head gasket\").",
+  "tutorialsEmptyHint": "Enter what you want to repair above and we'll find matching videos.",
+  "tutorialsNothingFound": "Nothing found",
+
+  "videoPlayerTip": "Tip: Watch the video all the way through before you start. Note the tools and parts you'll need.",
+
+  "workshopTitle": "Workshop report",
+  "workshopSharePdf": "Share as PDF",
+  "workshopNoVehicle": "No vehicle",
+  "workshopDescription": "Briefly describe the problem — the AI creates a structured report you can give to your mechanic.",
+  "workshopSymptomsLabel": "Symptoms",
+  "workshopSymptomsPlaceholder": "e.g. \"Since yesterday the engine stutters at 60 km/h, the engine warning light is flashing yellow, smell of petrol.\"",
+  "workshopAnalyzing": "Analysing…",
+  "workshopGenerateButton": "Generate report",
+  "workshopAnalysisTitle": "Analysis",
+  "workshopPdfTitle": "AutoMate — Workshop report",
+  "workshopPdfSymptomsLabel": "Observed symptoms:",
+  "workshopPdfAnalysisLabel": "Analysis:",
+  "workshopPdfFooter": "Created with AutoMate · AI analysis for guidance only · Does not replace professional diagnosis.",
+  "workshopPdfFilename": "workshop_report_{make}_{model}.pdf",
+  "@workshopPdfFilename": {
+    "placeholders": {
+      "make": { "type": "String" },
+      "model": { "type": "String" }
+    }
+  },
+
+  "breakdownTitle": "Breakdown assistant",
+  "breakdownTts": "Text-to-speech",
+  "breakdownFindGarage": "Find garage",
+  "breakdownNoVehicle": "No vehicle",
+  "breakdownPlaceholder": "What's wrong with your {make}?",
+  "@breakdownPlaceholder": {
+    "placeholders": { "make": { "type": "String" } }
+  },
+  "breakdownExamplesTitle": "Speak or type your problem. Examples:",
+  "breakdownExample1Beginner": "The engine warning light is flashing yellow",
+  "breakdownExample2Beginner": "The car won't start",
+  "breakdownExample3Beginner": "I hear a squeak when braking",
+  "breakdownExample1Intermediate": "Fault code P0420 — what to do?",
+  "breakdownExample2Intermediate": "Replacing brakes — what do I need?",
+  "breakdownExample3Intermediate": "Doing an oil change myself — what to watch out for?",
+  "breakdownExample1Pro": "Front vs rear lambda sensor — differences",
+  "breakdownExample2Pro": "Compression values Bank 1 low, diagnostic steps",
+  "breakdownExample3Pro": "Replace dual-mass flywheel — tools needed",
+  "breakdownWebWarning": "Voice control and text-to-speech are only available in the mobile app. You can still type in the browser.",
+  "breakdownInputPlaceholder": "Describe the problem…",
+
+  "garageFinderTitle": "Garages nearby",
+  "garageFinderDefault": "Garage",
+  "garageFinderFound": "{count} garages found",
+  "@garageFinderFound": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "garageFinderNoLocation": "Location unavailable — searching around centre of Germany."
+}

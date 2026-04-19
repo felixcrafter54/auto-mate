@@ -1,6 +1,8 @@
+import 'package:auto_mate/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../core/l10n/fuel_labels.dart';
 import '../../core/providers/database_provider.dart';
 import '../../core/providers/session_provider.dart';
 import '../../features/profile/profile_drawer.dart';
@@ -12,6 +14,7 @@ class DashboardScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l = AppLocalizations.of(context);
     final userId = ref.watch(currentUserIdProvider);
 
     if (userId == null) {
@@ -22,11 +25,11 @@ class DashboardScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('AutoMate'),
+        title: Text(l.dashboardTitle),
         actions: [
           IconButton(
             icon: const Icon(Icons.add),
-            tooltip: 'Fahrzeug hinzufügen',
+            tooltip: l.dashboardAddVehicle,
             onPressed: () => context.push('/vehicle-setup'),
           ),
         ],
@@ -34,7 +37,7 @@ class DashboardScreen extends ConsumerWidget {
       drawer: const ProfileDrawer(),
       body: vehiclesAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('Fehler: $e')),
+        error: (e, _) => Center(child: Text(l.commonError(e.toString()))),
         data: (vehicles) {
           if (vehicles.isEmpty) return _EmptyState();
           return ListView.builder(
@@ -56,6 +59,7 @@ final _vehiclesStreamProvider =
 class _EmptyState extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -67,18 +71,18 @@ class _EmptyState extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           Text(
-            'Noch kein Fahrzeug',
+            l.dashboardNoVehicle,
             style: Theme.of(context).textTheme.titleLarge,
           ),
           const SizedBox(height: 8),
           Text(
-            'Füge dein erstes Fahrzeug hinzu.',
+            l.dashboardNoVehicleHint,
             style: Theme.of(context).textTheme.bodyMedium,
           ),
           const SizedBox(height: 24),
           FilledButton.icon(
             icon: const Icon(Icons.add),
-            label: const Text('Fahrzeug hinzufügen'),
+            label: Text(l.dashboardAddVehicle),
             onPressed: () => context.push('/vehicle-setup'),
           ),
         ],
@@ -93,6 +97,7 @@ class _VehicleCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
     final fuelType = FuelType.fromString(vehicle.fuelType);
 
     return Card(
@@ -110,7 +115,7 @@ class _VehicleCard extends StatelessWidget {
         subtitle: Padding(
           padding: const EdgeInsets.only(top: 4),
           child: Text(
-            '${_formatKm(vehicle.currentMileage)} km  •  ${_fuelLabel(fuelType)}',
+            '${_formatKm(vehicle.currentMileage)} km  •  ${fuelTypeLabel(l, fuelType)}',
           ),
         ),
         trailing: const Icon(Icons.chevron_right),
@@ -126,14 +131,6 @@ class _VehicleCard extends StatelessWidget {
       _ => Icons.local_gas_station,
     };
   }
-
-  String _fuelLabel(FuelType ft) => switch (ft) {
-        FuelType.petrol => 'Benzin',
-        FuelType.diesel => 'Diesel',
-        FuelType.electric => 'Elektro',
-        FuelType.hybrid => 'Hybrid',
-        FuelType.other => 'Sonstiges',
-      };
 
   String _formatKm(int km) {
     final s = km.toString();

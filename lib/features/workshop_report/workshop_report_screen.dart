@@ -1,3 +1,4 @@
+import 'package:auto_mate/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pdf/pdf.dart';
@@ -56,10 +57,7 @@ class _WorkshopReportScreenState extends ConsumerState<WorkshopReportScreen> {
       final report = await service.complete(
         systemPrompt: systemPrompt,
         messages: [
-          GeminiMessage(
-            role: 'user',
-            content: _symptomCtrl.text.trim(),
-          ),
+          GeminiMessage(role: 'user', content: _symptomCtrl.text.trim()),
         ],
         maxTokens: 1500,
       );
@@ -78,7 +76,7 @@ class _WorkshopReportScreenState extends ConsumerState<WorkshopReportScreen> {
     }
   }
 
-  Future<void> _share(Vehicle vehicle) async {
+  Future<void> _share(Vehicle vehicle, AppLocalizations l) async {
     if (_report == null) return;
     final doc = pw.Document();
     final vehicleLine = '${vehicle.year} ${vehicle.make} ${vehicle.model}';
@@ -87,26 +85,25 @@ class _WorkshopReportScreenState extends ConsumerState<WorkshopReportScreen> {
         pageFormat: PdfPageFormat.a4,
         margin: const pw.EdgeInsets.all(36),
         build: (context) => [
-          pw.Text('AutoMate — Werkstattbericht',
+          pw.Text(l.workshopPdfTitle,
               style: pw.TextStyle(fontSize: 22, fontWeight: pw.FontWeight.bold)),
           pw.SizedBox(height: 4),
           pw.Text(vehicleLine,
               style: const pw.TextStyle(fontSize: 14, color: PdfColors.grey700)),
           pw.Divider(),
           pw.SizedBox(height: 10),
-          pw.Text('Beobachtete Symptome:',
+          pw.Text(l.workshopPdfSymptomsLabel,
               style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
           pw.SizedBox(height: 4),
           pw.Text(_symptomCtrl.text.trim()),
           pw.SizedBox(height: 14),
-          pw.Text('Analyse:',
+          pw.Text(l.workshopPdfAnalysisLabel,
               style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
           pw.SizedBox(height: 4),
           pw.Text(_report!),
           pw.SizedBox(height: 20),
           pw.Text(
-            'Erstellt mit AutoMate · KI-Analyse zur Orientierung · '
-            'Ersetzt keine professionelle Diagnose.',
+            l.workshopPdfFooter,
             style: const pw.TextStyle(fontSize: 9, color: PdfColors.grey600),
           ),
         ],
@@ -114,34 +111,35 @@ class _WorkshopReportScreenState extends ConsumerState<WorkshopReportScreen> {
     );
     await Printing.sharePdf(
       bytes: await doc.save(),
-      filename: 'werkstattbericht_${vehicle.make}_${vehicle.model}.pdf',
+      filename: l.workshopPdfFilename(vehicle.make, vehicle.model),
     );
   }
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
     final vehicleAsync = ref.watch(_vehicleProvider(widget.vehicleId));
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Werkstattbericht'),
+        title: Text(l.workshopTitle),
         actions: [
           if (_report != null)
             IconButton(
               icon: const Icon(Icons.picture_as_pdf),
-              tooltip: 'Als PDF teilen',
+              tooltip: l.workshopSharePdf,
               onPressed: () {
                 final v = vehicleAsync.valueOrNull;
-                if (v != null) _share(v);
+                if (v != null) _share(v, l);
               },
             ),
         ],
       ),
       body: vehicleAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('Fehler: $e')),
+        error: (e, _) => Center(child: Text(l.commonError(e.toString()))),
         data: (vehicle) {
-          if (vehicle == null) return const Center(child: Text('Kein Fahrzeug'));
+          if (vehicle == null) return Center(child: Text(l.workshopNoVehicle));
           return ListView(
             padding: const EdgeInsets.all(20),
             children: [
@@ -152,18 +150,13 @@ class _WorkshopReportScreenState extends ConsumerState<WorkshopReportScreen> {
                   child: Row(
                     children: [
                       Icon(Icons.description,
-                          color: Theme.of(context)
-                              .colorScheme
-                              .onPrimaryContainer),
+                          color: Theme.of(context).colorScheme.onPrimaryContainer),
                       const SizedBox(width: 10),
                       Expanded(
                         child: Text(
-                          'Beschreibe kurz das Problem — die KI erstellt einen '
-                          'strukturierten Bericht, den du dem Mechaniker geben kannst.',
+                          l.workshopDescription,
                           style: TextStyle(
-                            color: Theme.of(context)
-                                .colorScheme
-                                .onPrimaryContainer,
+                            color: Theme.of(context).colorScheme.onPrimaryContainer,
                           ),
                         ),
                       ),
@@ -176,12 +169,10 @@ class _WorkshopReportScreenState extends ConsumerState<WorkshopReportScreen> {
                 controller: _symptomCtrl,
                 minLines: 3,
                 maxLines: 8,
-                decoration: const InputDecoration(
-                  labelText: 'Symptome',
-                  hintText:
-                      'z. B. "Seit gestern ruckelt der Motor bei 60 km/h, '
-                      'Motorkontrollleuchte blinkt gelb, Geruch nach Benzin."',
-                  border: OutlineInputBorder(),
+                decoration: InputDecoration(
+                  labelText: l.workshopSymptomsLabel,
+                  hintText: l.workshopSymptomsPlaceholder,
+                  border: const OutlineInputBorder(),
                 ),
               ),
               const SizedBox(height: 12),
@@ -196,7 +187,7 @@ class _WorkshopReportScreenState extends ConsumerState<WorkshopReportScreen> {
                               strokeWidth: 2, color: Colors.white),
                         )
                       : const Icon(Icons.auto_awesome),
-                  label: Text(_loading ? 'Analysiere ...' : 'Bericht erstellen'),
+                  label: Text(_loading ? l.workshopAnalyzing : l.workshopGenerateButton),
                   onPressed: _loading ? null : () => _generate(vehicle),
                 ),
               ),
@@ -216,7 +207,7 @@ class _WorkshopReportScreenState extends ConsumerState<WorkshopReportScreen> {
               ],
               if (_report != null) ...[
                 const SizedBox(height: 24),
-                Text('Analyse',
+                Text(l.workshopAnalysisTitle,
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
                           fontWeight: FontWeight.bold,
                         )),
@@ -230,8 +221,8 @@ class _WorkshopReportScreenState extends ConsumerState<WorkshopReportScreen> {
                 const SizedBox(height: 16),
                 FilledButton.tonalIcon(
                   icon: const Icon(Icons.picture_as_pdf),
-                  label: const Text('Als PDF teilen'),
-                  onPressed: () => _share(vehicle),
+                  label: Text(l.workshopSharePdf),
+                  onPressed: () => _share(vehicle, l),
                 ),
               ],
             ],

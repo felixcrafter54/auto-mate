@@ -1,3 +1,4 @@
+import 'package:auto_mate/l10n/app_localizations.dart';
 import 'package:drift/drift.dart' show Value;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -20,6 +21,7 @@ class FuelScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l = AppLocalizations.of(context);
     final entriesAsync = ref.watch(_fuelEntriesProvider(vehicleId));
     final vehicleAsync = ref.watch(vehicleStreamProvider(vehicleId));
 
@@ -30,7 +32,7 @@ class FuelScreen extends ConsumerWidget {
     // Guard: only fossil-fuel vehicles
     if (fuelType != null && !fuelType.supportsFuelLog) {
       return Scaffold(
-        appBar: AppBar(title: const Text(fuelScreenTitle)),
+        appBar: AppBar(title: Text(l.fuelScreenTitle)),
         body: Center(
           child: Padding(
             padding: const EdgeInsets.all(32),
@@ -42,12 +44,12 @@ class FuelScreen extends ConsumerWidget {
                     color: Theme.of(context).colorScheme.outline),
                 const SizedBox(height: 16),
                 Text(
-                  fuelScreenNotAvailableTitle,
+                  l.fuelScreenNotAvailableTitle,
                   style: Theme.of(context).textTheme.titleLarge,
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  fuelScreenNotAvailableBody,
+                  l.fuelScreenNotAvailableBody,
                   style: Theme.of(context).textTheme.bodyMedium,
                   textAlign: TextAlign.center,
                 ),
@@ -59,15 +61,15 @@ class FuelScreen extends ConsumerWidget {
     }
 
     return Scaffold(
-      appBar: AppBar(title: const Text(fuelScreenTitle)),
+      appBar: AppBar(title: Text(l.fuelScreenTitle)),
       floatingActionButton: FloatingActionButton.extended(
         icon: const Icon(Icons.local_gas_station),
-        label: const Text(fuelScreenAddButton),
+        label: Text(l.fuelScreenAddButton),
         onPressed: () => _showAddEntry(context, ref, vehicle, fuelType),
       ),
       body: entriesAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('Fehler: $e')),
+        error: (e, _) => Center(child: Text(l.commonError(e.toString()))),
         data: (entries) {
           return ListView(
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 96),
@@ -78,7 +80,7 @@ class FuelScreen extends ConsumerWidget {
                 const _EmptyState()
               else ...[
                 Text(
-                  fuelScreenAllEntries,
+                  l.fuelScreenAllEntries,
                   style: Theme.of(context)
                       .textTheme
                       .titleSmall
@@ -123,23 +125,26 @@ class FuelScreen extends ConsumerWidget {
       BuildContext context, WidgetRef ref, FuelEntry entry) async {
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text(fuelScreenDeleteTitle),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text(fuelScreenDeleteCancel),
-          ),
-          FilledButton.tonal(
-            style: FilledButton.styleFrom(
-              foregroundColor: Theme.of(ctx).colorScheme.onErrorContainer,
-              backgroundColor: Theme.of(ctx).colorScheme.errorContainer,
+      builder: (ctx) {
+        final lCtx = AppLocalizations.of(ctx);
+        return AlertDialog(
+          title: Text(lCtx.fuelScreenDeleteTitle),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: Text(lCtx.commonCancel),
             ),
-            onPressed: () => Navigator.pop(ctx, true),
-            child: const Text(fuelScreenDeleteConfirm),
-          ),
-        ],
-      ),
+            FilledButton.tonal(
+              style: FilledButton.styleFrom(
+                foregroundColor: Theme.of(ctx).colorScheme.onErrorContainer,
+                backgroundColor: Theme.of(ctx).colorScheme.errorContainer,
+              ),
+              onPressed: () => Navigator.pop(ctx, true),
+              child: Text(lCtx.commonDelete),
+            ),
+          ],
+        );
+      },
     );
     if (confirmed != true) return;
     await ref.read(fuelEntriesRepositoryProvider).deleteFuelEntry(entry.id);
@@ -157,6 +162,7 @@ class _StatsCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
     final cs = Theme.of(context).colorScheme;
 
     final sorted = [...entries]
@@ -207,7 +213,7 @@ class _StatsCard extends StatelessWidget {
           children: [
             _StatItem(
               icon: Icons.local_gas_station,
-              label: fuelScreenStatConsumption,
+              label: l.fuelScreenStatConsumption,
               value: avgConsumption != null
                   ? '${avgConsumption.toStringAsFixed(1)} L/100km'
                   : '—',
@@ -215,7 +221,7 @@ class _StatsCard extends StatelessWidget {
             const VerticalDivider(),
             _StatItem(
               icon: Icons.route,
-              label: fuelScreenStatKmPerYear,
+              label: l.fuelScreenStatKmPerYear,
               value: avgKmPerYear != null ? _fmt(avgKmPerYear) : '—',
               suffix: avgKmPerYear != null ? ' km' : '',
               isEstimate: avgKmPerYear == vehicle?.annualKmEstimate &&
@@ -224,7 +230,7 @@ class _StatsCard extends StatelessWidget {
             const VerticalDivider(),
             _StatItem(
               icon: Icons.euro,
-              label: fuelScreenStatTotalCost,
+              label: l.fuelScreenStatTotalCost,
               value: totalCost != null
                   ? '${totalCost.toStringAsFixed(0)} €'
                   : '—',
@@ -307,8 +313,9 @@ class _FuelEntryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
     final cs = Theme.of(context).colorScheme;
-    final fmt = DateFormat('dd.MM.yyyy', 'de');
+    final fmt = DateFormat('dd.MM.yyyy');
 
     double? consumption;
     if (prevEntry != null && entry.fullTank) {
@@ -320,7 +327,7 @@ class _FuelEntryCard extends StatelessWidget {
     }
 
     final grade = entry.fuelGrade != null
-        ? fuelGradeLabel(FuelGrade.fromString(entry.fuelGrade!))
+        ? fuelGradeLabel(l, FuelGrade.fromString(entry.fuelGrade!))
         : null;
     final totalCost = entry.pricePerLiter != null
         ? entry.liters * entry.pricePerLiter!
@@ -450,6 +457,7 @@ class _AddFuelEntrySheetState extends ConsumerState<_AddFuelEntrySheet> {
   Future<void> _save() async {
     if (!_isValid) return;
     setState(() => _saving = true);
+    final l = AppLocalizations.of(context);
 
     final liters = double.parse(_litersCtrl.text.replaceAll(',', '.'));
     final odometer = int.parse(_odometerCtrl.text);
@@ -474,7 +482,7 @@ class _AddFuelEntrySheetState extends ConsumerState<_AddFuelEntrySheet> {
           .read(vehiclesRepositoryProvider)
           .updateMileage(widget.vehicleId, odometer);
       await checkKmReminders(
-          ref.read(databaseProvider), widget.vehicleId, odometer);
+          ref.read(databaseProvider), widget.vehicleId, odometer, l);
     }
 
     if (mounted) Navigator.pop(context);
@@ -482,7 +490,8 @@ class _AddFuelEntrySheetState extends ConsumerState<_AddFuelEntrySheet> {
 
   @override
   Widget build(BuildContext context) {
-    final fmt = DateFormat('dd.MM.yyyy', 'de');
+    final l = AppLocalizations.of(context);
+    final fmt = DateFormat('dd.MM.yyyy');
     final grades = widget.fuelType.applicableGrades;
 
     return Padding(
@@ -497,7 +506,7 @@ class _AddFuelEntrySheetState extends ConsumerState<_AddFuelEntrySheet> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            fuelSheetTitle,
+            l.fuelSheetTitle,
             style: Theme.of(context)
                 .textTheme
                 .titleLarge
@@ -521,11 +530,11 @@ class _AddFuelEntrySheetState extends ConsumerState<_AddFuelEntrySheet> {
           const SizedBox(height: 16),
           // Fuel grade
           InputDecorator(
-            decoration: const InputDecoration(
-              labelText: fuelSheetFieldGrade,
-              border: OutlineInputBorder(),
-              prefixIcon: Icon(Icons.local_gas_station),
-              contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+            decoration: InputDecoration(
+              labelText: l.fuelSheetFieldGrade,
+              border: const OutlineInputBorder(),
+              prefixIcon: const Icon(Icons.local_gas_station),
+              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
             ),
             child: DropdownButtonHideUnderline(
               child: DropdownButton<FuelGrade>(
@@ -534,7 +543,7 @@ class _AddFuelEntrySheetState extends ConsumerState<_AddFuelEntrySheet> {
                 items: grades
                     .map((g) => DropdownMenuItem(
                           value: g,
-                          child: Text(fuelGradeLabel(g)),
+                          child: Text(fuelGradeLabel(l, g)),
                         ))
                     .toList(),
                 onChanged: (v) => setState(() => _grade = v),
@@ -552,11 +561,11 @@ class _AddFuelEntrySheetState extends ConsumerState<_AddFuelEntrySheet> {
                   inputFormatters: [
                     FilteringTextInputFormatter.allow(RegExp(r'[\d,.]')),
                   ],
-                  decoration: const InputDecoration(
-                    labelText: fuelSheetFieldLiters,
-                    border: OutlineInputBorder(),
+                  decoration: InputDecoration(
+                    labelText: l.fuelSheetFieldLiters,
+                    border: const OutlineInputBorder(),
                     suffixText: 'L',
-                    prefixIcon: Icon(Icons.water_drop_outlined),
+                    prefixIcon: const Icon(Icons.water_drop_outlined),
                   ),
                   onChanged: (_) => setState(() {}),
                 ),
@@ -571,7 +580,7 @@ class _AddFuelEntrySheetState extends ConsumerState<_AddFuelEntrySheet> {
                     FilteringTextInputFormatter.allow(RegExp(r'[\d,.]')),
                   ],
                   decoration: InputDecoration(
-                    labelText: fuelSheetFieldTotalPrice,
+                    labelText: l.fuelSheetFieldTotalPrice,
                     border: const OutlineInputBorder(),
                     suffixText: '€',
                     prefixIcon: const Icon(Icons.euro),
@@ -587,11 +596,11 @@ class _AddFuelEntrySheetState extends ConsumerState<_AddFuelEntrySheet> {
             controller: _odometerCtrl,
             keyboardType: TextInputType.number,
             inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-            decoration: const InputDecoration(
-              labelText: fuelSheetFieldOdometer,
-              border: OutlineInputBorder(),
+            decoration: InputDecoration(
+              labelText: l.fuelSheetFieldOdometer,
+              border: const OutlineInputBorder(),
               suffixText: 'km',
-              prefixIcon: Icon(Icons.speed),
+              prefixIcon: const Icon(Icons.speed),
             ),
             onChanged: (_) => setState(() {}),
           ),
@@ -600,8 +609,8 @@ class _AddFuelEntrySheetState extends ConsumerState<_AddFuelEntrySheet> {
           SwitchListTile(
             value: _fullTank,
             onChanged: (v) => setState(() => _fullTank = v),
-            title: const Text(fuelSheetFullTankLabel),
-            subtitle: const Text(fuelSheetFullTankHint),
+            title: Text(l.fuelSheetFullTankLabel),
+            subtitle: Text(l.fuelSheetFullTankHint),
             contentPadding: EdgeInsets.zero,
           ),
           const SizedBox(height: 8),
@@ -616,7 +625,7 @@ class _AddFuelEntrySheetState extends ConsumerState<_AddFuelEntrySheet> {
                           strokeWidth: 2, color: Colors.white),
                     )
                   : const Icon(Icons.check),
-              label: Text(_saving ? fuelSheetSaving : fuelSheetSave),
+              label: Text(_saving ? l.fuelSheetSaving : l.fuelSheetSave),
               onPressed: _isValid && !_saving ? _save : null,
             ),
           ),
@@ -635,6 +644,7 @@ class _EmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -646,11 +656,11 @@ class _EmptyState extends StatelessWidget {
             color: Theme.of(context).colorScheme.outline,
           ),
           const SizedBox(height: 16),
-          Text(fuelScreenEmptyTitle,
+          Text(l.fuelScreenEmptyTitle,
               style: Theme.of(context).textTheme.titleLarge),
           const SizedBox(height: 8),
           Text(
-            fuelScreenEmptyBody,
+            l.fuelScreenEmptyBody,
             style: Theme.of(context).textTheme.bodyMedium,
             textAlign: TextAlign.center,
           ),

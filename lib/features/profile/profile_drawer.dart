@@ -1,3 +1,4 @@
+import 'package:auto_mate/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -10,6 +11,7 @@ class ProfileDrawer extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l = AppLocalizations.of(context);
     final userAsync = ref.watch(currentUserProvider);
     final skillLevel = ref.watch(skillLevelProvider);
     final user = userAsync.valueOrNull;
@@ -19,7 +21,6 @@ class ProfileDrawer extends ConsumerWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ── Header ────────────────────────────────────────────────────────
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 24, 20, 16),
               child: Column(
@@ -34,24 +35,21 @@ class ProfileDrawer extends ConsumerWidget {
                       style: TextStyle(
                         fontSize: 24,
                         fontWeight: FontWeight.bold,
-                        color: Theme.of(context)
-                            .colorScheme
-                            .onPrimaryContainer,
+                        color: Theme.of(context).colorScheme.onPrimaryContainer,
                       ),
                     ),
                   ),
                   const SizedBox(height: 14),
                   Text(
                     user?.name ?? '–',
-                    style:
-                        Theme.of(context).textTheme.titleLarge?.copyWith(
-                              fontWeight: FontWeight.bold,
-                            ),
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
                   ),
                   if (user != null) ...[
                     const SizedBox(height: 2),
                     Text(
-                      'Dabei seit ${_formatDate(user.createdAt)}',
+                      l.profileMemberSinceDate(_formatDate(user.createdAt)),
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
                             color: Theme.of(context).colorScheme.outline,
                           ),
@@ -66,11 +64,10 @@ class ProfileDrawer extends ConsumerWidget {
             ),
             const Divider(height: 1),
 
-            // ── Profildaten ───────────────────────────────────────────────────
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
               child: Text(
-                'PROFIL',
+                l.profileTitle,
                 style: Theme.of(context).textTheme.labelSmall?.copyWith(
                       color: Theme.of(context).colorScheme.outline,
                       letterSpacing: 1.2,
@@ -80,30 +77,29 @@ class ProfileDrawer extends ConsumerWidget {
             if (user != null) ...[
               _InfoTile(
                 icon: Icons.person_outline,
-                label: 'Name',
+                label: l.profileName,
                 value: user.name,
               ),
               _InfoTile(
                 icon: Icons.calendar_today_outlined,
-                label: 'Mitglied seit',
+                label: l.profileMemberSince,
                 value: _formatDate(user.createdAt),
               ),
             ],
             if (skillLevel != null)
               _InfoTile(
                 icon: Icons.tune,
-                label: 'Skill Level',
-                value: _skillLabel(skillLevel),
+                label: l.profileSkillLevel,
+                value: _skillLabel(l, skillLevel),
               ),
 
             const SizedBox(height: 8),
             const Divider(height: 1),
 
-            // ── Aktionen ──────────────────────────────────────────────────────
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
               child: Text(
-                'EINSTELLUNGEN',
+                l.profileSettingsSection,
                 style: Theme.of(context).textTheme.labelSmall?.copyWith(
                       color: Theme.of(context).colorScheme.outline,
                       letterSpacing: 1.2,
@@ -112,14 +108,14 @@ class ProfileDrawer extends ConsumerWidget {
             ),
             ListTile(
               leading: const Icon(Icons.tune),
-              title: const Text('Skill Level ändern'),
+              title: Text(l.profileChangeSkillLevel),
               trailing: const Icon(Icons.chevron_right, size: 18),
-              onTap: () => _confirmChange(context, ref, skillLevel),
+              onTap: () => _confirmChange(context, ref, skillLevel, l),
             ),
             ListTile(
               leading: const Icon(Icons.key_outlined),
-              title: const Text('API-Keys & Sprache'),
-              subtitle: const Text('Gemini, YouTube, Berichtsprache'),
+              title: Text(l.profileApiAndLanguage),
+              subtitle: Text(l.profileApiAndLanguageHint),
               trailing: const Icon(Icons.chevron_right, size: 18),
               onTap: () {
                 Navigator.pop(context);
@@ -130,16 +126,11 @@ class ProfileDrawer extends ConsumerWidget {
             const Spacer(),
             const Divider(height: 1),
 
-            // ── Abmelden ──────────────────────────────────────────────────────
             ListTile(
-              leading: Icon(
-                Icons.logout,
-                color: Theme.of(context).colorScheme.error,
-              ),
+              leading: Icon(Icons.logout, color: Theme.of(context).colorScheme.error),
               title: Text(
-                'Abmelden',
-                style:
-                    TextStyle(color: Theme.of(context).colorScheme.error),
+                l.profileLogout,
+                style: TextStyle(color: Theme.of(context).colorScheme.error),
               ),
               onTap: () => _logout(context, ref),
             ),
@@ -149,8 +140,6 @@ class ProfileDrawer extends ConsumerWidget {
       ),
     );
   }
-
-  // ── Helpers ─────────────────────────────────────────────────────────────────
 
   String _initials(String name) {
     final parts = name.trim().split(' ').where((p) => p.isNotEmpty).toList();
@@ -163,125 +152,120 @@ class ProfileDrawer extends ConsumerWidget {
   String _formatDate(DateTime dt) =>
       '${dt.day.toString().padLeft(2, '0')}.${dt.month.toString().padLeft(2, '0')}.${dt.year}';
 
-  String _skillLabel(SkillLevel level) => switch (level) {
-        SkillLevel.beginner => 'Einsteiger',
-        SkillLevel.intermediate => 'Fortgeschritten',
-        SkillLevel.pro => 'Profi',
+  String _skillLabel(AppLocalizations l, SkillLevel level) => switch (level) {
+        SkillLevel.beginner => l.skillLevelBeginner,
+        SkillLevel.intermediate => l.skillLevelIntermediate,
+        SkillLevel.pro => l.skillLevelPro,
       };
 
-  // ── Skill Level ändern (mit Bestätigungsdialog) ───────────────────────────
-
   void _confirmChange(
-      BuildContext context, WidgetRef ref, SkillLevel? current) {
+      BuildContext context, WidgetRef ref, SkillLevel? current, AppLocalizations l) {
     showDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Skill Level ändern'),
-        content: const Text(
-          'Möchtest du dein Skill Level wirklich anpassen?\n'
-          'AutoMate passt alle Empfehlungen und Erklärungen entsprechend an.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('Abbrechen'),
-          ),
-          FilledButton(
-            onPressed: () {
-              Navigator.pop(ctx);
-              _showLevelPicker(context, ref, current);
-            },
-            child: const Text('Ja, anpassen'),
-          ),
-        ],
-      ),
+      builder: (ctx) {
+        final lCtx = AppLocalizations.of(ctx);
+        return AlertDialog(
+          title: Text(lCtx.profileChangeSkillLevelTitle),
+          content: Text(lCtx.profileChangeSkillLevelBody),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: Text(lCtx.commonCancel),
+            ),
+            FilledButton(
+              onPressed: () {
+                Navigator.pop(ctx);
+                _showLevelPicker(context, ref, current);
+              },
+              child: Text(lCtx.profileChangeSkillLevelYes),
+            ),
+          ],
+        );
+      },
     );
   }
 
-  void _showLevelPicker(
-      BuildContext context, WidgetRef ref, SkillLevel? current) {
+  void _showLevelPicker(BuildContext context, WidgetRef ref, SkillLevel? current) {
     showModalBottomSheet(
       context: context,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      builder: (ctx) => Padding(
-        padding: const EdgeInsets.fromLTRB(24, 24, 24, 32),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Wähle dein Skill Level',
-              style: Theme.of(ctx).textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.bold,
+      builder: (ctx) {
+        final lCtx = AppLocalizations.of(ctx);
+        return Padding(
+          padding: const EdgeInsets.fromLTRB(24, 24, 24, 32),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                lCtx.profileSelectSkillLevel,
+                style: Theme.of(ctx).textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+              ),
+              const SizedBox(height: 20),
+              ...SkillLevel.values.map((level) {
+                final cs = Theme.of(ctx).colorScheme;
+                final (icon, label, desc, color) = switch (level) {
+                  SkillLevel.beginner => (
+                      Icons.school_outlined,
+                      lCtx.skillLevelBeginner,
+                      lCtx.skillLevelBeginnerFeatures,
+                      cs.tertiary,
+                    ),
+                  SkillLevel.intermediate => (
+                      Icons.build_outlined,
+                      lCtx.skillLevelIntermediate,
+                      lCtx.skillLevelIntermediateFeatures,
+                      cs.primary,
+                    ),
+                  SkillLevel.pro => (
+                      Icons.engineering_outlined,
+                      lCtx.skillLevelPro,
+                      lCtx.skillLevelProFeatures,
+                      cs.error,
+                    ),
+                };
+                return ListTile(
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+                  leading: CircleAvatar(
+                    backgroundColor: color.withValues(alpha: 0.12),
+                    child: Icon(icon, color: color, size: 20),
                   ),
-            ),
-            const SizedBox(height: 20),
-            ...SkillLevel.values.map((level) {
-              final cs = Theme.of(ctx).colorScheme;
-              final (icon, label, desc, color) = switch (level) {
-                SkillLevel.beginner => (
-                    Icons.school_outlined,
-                    'Einsteiger',
-                    'Werkstatt-Empfehlungen, einfache Erklärungen',
-                    cs.tertiary,
+                  title: Text(
+                    label,
+                    style: TextStyle(
+                      fontWeight: FontWeight.w600,
+                      color: level == current ? color : null,
+                    ),
                   ),
-                SkillLevel.intermediate => (
-                    Icons.build_outlined,
-                    'Fortgeschritten',
-                    'Tutorials, DIY mit Anleitung',
-                    cs.primary,
-                  ),
-                SkillLevel.pro => (
-                    Icons.engineering_outlined,
-                    'Profi',
-                    'Technische Details, volle Kontrolle',
-                    cs.error,
-                  ),
-              };
-              return ListTile(
-                contentPadding:
-                    const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
-                leading: CircleAvatar(
-                  backgroundColor: color.withValues(alpha: 0.12),
-                  child: Icon(icon, color: color, size: 20),
-                ),
-                title: Text(
-                  label,
-                  style: TextStyle(
-                    fontWeight: FontWeight.w600,
-                    color: level == current ? color : null,
-                  ),
-                ),
-                subtitle: Text(desc),
-                trailing: level == current
-                    ? Icon(Icons.check_circle, color: color)
-                    : const Icon(Icons.radio_button_unchecked),
-                onTap: () async {
-                  Navigator.pop(ctx);
-                  await ref
-                      .read(profileNotifierProvider.notifier)
-                      .setSkillLevel(level);
-                  if (context.mounted) Navigator.pop(context); // drawer
-                },
-              );
-            }),
-          ],
-        ),
-      ),
+                  subtitle: Text(desc),
+                  trailing: level == current
+                      ? Icon(Icons.check_circle, color: color)
+                      : const Icon(Icons.radio_button_unchecked),
+                  onTap: () async {
+                    Navigator.pop(ctx);
+                    await ref
+                        .read(profileNotifierProvider.notifier)
+                        .setSkillLevel(level);
+                    if (context.mounted) Navigator.pop(context);
+                  },
+                );
+              }),
+            ],
+          ),
+        );
+      },
     );
   }
 
   Future<void> _logout(BuildContext context, WidgetRef ref) async {
-    Navigator.pop(context); // close drawer
+    Navigator.pop(context);
     await ref.read(sessionNotifierProvider.notifier).logout();
   }
 }
-
-// ============================================================================
-// WIDGETS
-// ============================================================================
 
 class _InfoTile extends StatelessWidget {
   final IconData icon;
@@ -331,12 +315,12 @@ class _SkillBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
     final cs = Theme.of(context).colorScheme;
     final (icon, label, color) = switch (level) {
-      SkillLevel.beginner => (Icons.school_outlined, 'Einsteiger', cs.tertiary),
-      SkillLevel.intermediate =>
-        (Icons.build_outlined, 'Fortgeschritten', cs.primary),
-      SkillLevel.pro => (Icons.engineering_outlined, 'Profi', cs.error),
+      SkillLevel.beginner => (Icons.school_outlined, l.skillLevelBeginner, cs.tertiary),
+      SkillLevel.intermediate => (Icons.build_outlined, l.skillLevelIntermediate, cs.primary),
+      SkillLevel.pro => (Icons.engineering_outlined, l.skillLevelPro, cs.error),
     };
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),

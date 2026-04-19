@@ -1,3 +1,4 @@
+import 'package:auto_mate/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -22,21 +23,22 @@ class RemindersScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l = AppLocalizations.of(context);
     final remindersAsync = ref.watch(_remindersProvider(vehicleId));
     final vehicleAsync = ref.watch(vehicleStreamProvider(vehicleId));
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Erinnerungen'),
+        title: Text(l.remindersTitle),
       ),
       floatingActionButton: FloatingActionButton.extended(
         icon: const Icon(Icons.add),
-        label: const Text('Neu'),
+        label: Text(l.remindersNew),
         onPressed: () => context.push('/vehicle/$vehicleId/reminders/add'),
       ),
       body: remindersAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('Fehler: $e')),
+        error: (e, _) => Center(child: Text(l.commonError(e.toString()))),
         data: (reminders) {
           final sorted = [...reminders]
             ..sort((a, b) => a.dueDate.compareTo(b.dueDate));
@@ -64,25 +66,27 @@ class RemindersScreen extends ConsumerWidget {
     Reminder reminder,
     int currentMileage,
   ) async {
+    final l = AppLocalizations.of(context);
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Erledigt markieren'),
-        content: Text(
-          'Möchtest du die Erinnerung "${_typeLabel(reminder)}" '
-          'als erledigt markieren?',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Abbrechen'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Erledigt'),
-          ),
-        ],
-      ),
+      builder: (ctx) {
+        final lCtx = AppLocalizations.of(ctx);
+        final label = reminderLabel(lCtx, ReminderType.fromString(reminder.type), customLabel: reminder.customLabel);
+        return AlertDialog(
+          title: Text(lCtx.remindersMarkDone),
+          content: Text(lCtx.remindersMarkDoneConfirm(label)),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: Text(lCtx.commonCancel),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              child: Text(lCtx.remindersMarkDone),
+            ),
+          ],
+        );
+      },
     );
 
     if (confirmed != true) return;
@@ -113,7 +117,7 @@ class RemindersScreen extends ConsumerWidget {
 
     if (!context.mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Als erledigt markiert')),
+      SnackBar(content: Text(l.remindersMarkedDone)),
     );
   }
 
@@ -122,29 +126,31 @@ class RemindersScreen extends ConsumerWidget {
     WidgetRef ref,
     Reminder reminder,
   ) async {
+    final l = AppLocalizations.of(context);
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Erinnerung löschen?'),
-        content: Text(
-          'Die Erinnerung "${_typeLabel(reminder)}" und alle zugehörigen '
-          'Benachrichtigungen werden entfernt.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Abbrechen'),
-          ),
-          FilledButton.tonal(
-            style: FilledButton.styleFrom(
-              foregroundColor: Theme.of(ctx).colorScheme.onErrorContainer,
-              backgroundColor: Theme.of(ctx).colorScheme.errorContainer,
+      builder: (ctx) {
+        final lCtx = AppLocalizations.of(ctx);
+        final label = reminderLabel(lCtx, ReminderType.fromString(reminder.type), customLabel: reminder.customLabel);
+        return AlertDialog(
+          title: Text(lCtx.remindersDeleteTitle),
+          content: Text(lCtx.remindersDeleteBody(label)),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: Text(lCtx.commonCancel),
             ),
-            onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Löschen'),
-          ),
-        ],
-      ),
+            FilledButton.tonal(
+              style: FilledButton.styleFrom(
+                foregroundColor: Theme.of(ctx).colorScheme.onErrorContainer,
+                backgroundColor: Theme.of(ctx).colorScheme.errorContainer,
+              ),
+              onPressed: () => Navigator.pop(ctx, true),
+              child: Text(lCtx.commonDelete),
+            ),
+          ],
+        );
+      },
     );
 
     if (confirmed != true) return;
@@ -161,18 +167,16 @@ class RemindersScreen extends ConsumerWidget {
 
     if (!context.mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Erinnerung gelöscht')),
+      SnackBar(content: Text(l.remindersDeleted)),
     );
   }
-
-  String _typeLabel(Reminder r) =>
-      reminderLabel(ReminderType.fromString(r.type), customLabel: r.customLabel);
 }
 
 class _EmptyState extends StatelessWidget {
   const _EmptyState();
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -183,11 +187,11 @@ class _EmptyState extends StatelessWidget {
             color: Theme.of(context).colorScheme.outline,
           ),
           const SizedBox(height: 16),
-          Text('Keine Erinnerungen',
+          Text(l.remindersEmpty,
               style: Theme.of(context).textTheme.titleLarge),
           const SizedBox(height: 8),
           Text(
-            'Lege eine Erinnerung für Ölwechsel, TÜV und Co. an.',
+            l.remindersEmptyHint,
             style: Theme.of(context).textTheme.bodyMedium,
             textAlign: TextAlign.center,
           ),
@@ -212,6 +216,7 @@ class _ReminderCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
     final cs = Theme.of(context).colorScheme;
     final type = ReminderType.fromString(reminder.type);
     final now = DateTime.now();
@@ -222,7 +227,7 @@ class _ReminderCard extends StatelessWidget {
     final daysLeft = due.difference(today).inDays;
     final overdue = daysLeft < 0;
     final soon = daysLeft >= 0 && daysLeft <= 14;
-    final label = reminderLabel(type, customLabel: reminder.customLabel);
+    final label = reminderLabel(l, type, customLabel: reminder.customLabel);
 
     final statusColor = overdue
         ? cs.error
@@ -250,13 +255,13 @@ class _ReminderCard extends StatelessWidget {
                           const TextStyle(fontWeight: FontWeight.bold)),
                   const SizedBox(height: 2),
                   Text(
-                    _dateLabel(reminder.dueDate, daysLeft, overdue),
+                    _dateLabel(l, reminder.dueDate, daysLeft, overdue),
                     style: TextStyle(color: statusColor),
                   ),
                   if (reminder.dueMileage != null) ...[
                     const SizedBox(height: 2),
                     Text(
-                      _kmLabel(reminder, currentMileage),
+                      _kmLabel(l, reminder, currentMileage),
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
                             color: _kmColor(reminder, currentMileage, cs),
                           ),
@@ -267,12 +272,12 @@ class _ReminderCard extends StatelessWidget {
             ),
             IconButton(
               icon: const Icon(Icons.check_circle_outline),
-              tooltip: 'Erledigt',
+              tooltip: l.remindersMarkDone,
               onPressed: onDone,
             ),
             IconButton(
               icon: Icon(Icons.delete_outline, color: cs.error),
-              tooltip: 'Löschen',
+              tooltip: l.commonDelete,
               onPressed: onDelete,
             ),
           ],
@@ -281,13 +286,13 @@ class _ReminderCard extends StatelessWidget {
     );
   }
 
-  String _kmLabel(Reminder r, int currentKm) {
+  String _kmLabel(AppLocalizations l, Reminder r, int currentKm) {
     final due = r.dueMileage!;
     final offset = r.notifyOffsetKm ?? 0;
     final kmLeft = due - currentKm;
-    if (kmLeft <= 0) return 'Km-Fälligkeit erreicht! (${_formatKm(due)} km)';
-    final base = 'Bei ${_formatKm(due)} km · noch $kmLeft km (jetzt ${_formatKm(currentKm)} km)';
-    return offset > 0 ? '$base · Warnung ab ${_formatKm(due - offset)} km' : base;
+    if (kmLeft <= 0) return l.remindersKmOverdue(_formatKm(due));
+    final base = l.remindersKmDueAt(_formatKm(due), kmLeft.toString(), _formatKm(currentKm));
+    return offset > 0 ? l.remindersKmWithWarning(base, _formatKm(due - offset)) : base;
   }
 
   Color _kmColor(Reminder r, int currentKm, ColorScheme cs) {
@@ -299,14 +304,14 @@ class _ReminderCard extends StatelessWidget {
     return cs.outline;
   }
 
-  String _dateLabel(DateTime due, int daysLeft, bool overdue) {
-    final fmt = DateFormat('dd.MM.yyyy', 'de');
-    if (overdue) return '${fmt.format(due)} · ${-daysLeft} Tage überfällig';
-    if (daysLeft == 0) return 'Heute fällig!';
-    if (daysLeft == 1) return 'Morgen fällig';
-    if (daysLeft < 14) return 'In $daysLeft Tagen · ${fmt.format(due)}';
+  String _dateLabel(AppLocalizations l, DateTime due, int daysLeft, bool overdue) {
+    final fmt = DateFormat('dd.MM.yyyy');
+    if (overdue) return l.remindersOverdue(-daysLeft);
+    if (daysLeft == 0) return l.remindersDueToday;
+    if (daysLeft == 1) return l.remindersDueTomorrow;
+    if (daysLeft < 14) return l.remindersDueInDays(daysLeft, fmt.format(due));
     final weeks = (daysLeft / 7).round();
-    if (weeks < 9) return 'In $weeks Wochen · ${fmt.format(due)}';
+    if (weeks < 9) return l.remindersDueInWeeks(weeks, fmt.format(due));
     return fmt.format(due);
   }
 

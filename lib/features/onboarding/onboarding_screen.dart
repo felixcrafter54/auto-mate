@@ -1,3 +1,4 @@
+import 'package:auto_mate/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -39,6 +40,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
     return Scaffold(
       body: SafeArea(
         child: Padding(
@@ -56,14 +58,14 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                 ),
                 const SizedBox(height: 24),
                 Text(
-                  'Willkommen bei\nAutoMate',
+                  l.onboardingWelcomeTitle,
                   style: Theme.of(context).textTheme.displaySmall?.copyWith(
                         fontWeight: FontWeight.bold,
                       ),
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Dein Begleiter für Wartung,\nReparaturen und Pannen.',
+                  l.onboardingWelcomeSubtitle,
                   style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                         color: Theme.of(context).colorScheme.outline,
                       ),
@@ -71,14 +73,14 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                 const SizedBox(height: 48),
                 TextFormField(
                   controller: _nameController,
-                  decoration: const InputDecoration(
-                    labelText: 'Dein Name',
-                    border: OutlineInputBorder(),
-                    prefixIcon: Icon(Icons.person_outline),
+                  decoration: InputDecoration(
+                    labelText: l.onboardingNameLabel,
+                    border: const OutlineInputBorder(),
+                    prefixIcon: const Icon(Icons.person_outline),
                   ),
                   textCapitalization: TextCapitalization.words,
                   validator: (v) => (v == null || v.trim().isEmpty)
-                      ? 'Bitte gib deinen Namen ein'
+                      ? l.onboardingNameError
                       : null,
                 ),
                 const SizedBox(height: 24),
@@ -95,7 +97,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                             ),
                           )
                         : const Icon(Icons.arrow_forward),
-                    label: Text(_loading ? 'Einen Moment ...' : 'Los geht\'s'),
+                    label: Text(_loading ? l.onboardingStartingButton : l.onboardingStartButton),
                     onPressed: _loading ? null : _continue,
                   ),
                 ),

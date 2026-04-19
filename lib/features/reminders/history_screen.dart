@@ -1,3 +1,4 @@
+import 'package:auto_mate/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
@@ -18,13 +19,14 @@ class HistoryScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l = AppLocalizations.of(context);
     final historyAsync = ref.watch(_historyProvider(vehicleId));
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Wartungshistorie')),
+      appBar: AppBar(title: Text(l.historyTitle)),
       body: historyAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('Fehler: $e')),
+        error: (e, _) => Center(child: Text(l.commonError(e.toString()))),
         data: (list) {
           if (list.isEmpty) return const _Empty();
           return ListView.builder(
@@ -45,28 +47,30 @@ class HistoryScreen extends ConsumerWidget {
     WidgetRef ref,
     MaintenanceHistoryTableData entry,
   ) async {
+    final l = AppLocalizations.of(context);
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Eintrag löschen?'),
-        content: const Text(
-          'Der Eintrag wird dauerhaft aus der Historie entfernt.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Abbrechen'),
-          ),
-          FilledButton.tonal(
-            style: FilledButton.styleFrom(
-              foregroundColor: Theme.of(ctx).colorScheme.onErrorContainer,
-              backgroundColor: Theme.of(ctx).colorScheme.errorContainer,
+      builder: (ctx) {
+        final lCtx = AppLocalizations.of(ctx);
+        return AlertDialog(
+          title: Text(lCtx.historyDeleteTitle),
+          content: Text(lCtx.historyDeleteBody),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: Text(lCtx.commonCancel),
             ),
-            onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Löschen'),
-          ),
-        ],
-      ),
+            FilledButton.tonal(
+              style: FilledButton.styleFrom(
+                foregroundColor: Theme.of(ctx).colorScheme.onErrorContainer,
+                backgroundColor: Theme.of(ctx).colorScheme.errorContainer,
+              ),
+              onPressed: () => Navigator.pop(ctx, true),
+              child: Text(lCtx.commonDelete),
+            ),
+          ],
+        );
+      },
     );
     if (confirmed != true) return;
     await ref
@@ -74,7 +78,7 @@ class HistoryScreen extends ConsumerWidget {
         .deleteEntry(entry.id);
     if (!context.mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Eintrag gelöscht')),
+      SnackBar(content: Text(l.historyDeleted)),
     );
   }
 }
@@ -83,20 +87,19 @@ class _Empty extends StatelessWidget {
   const _Empty();
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(Icons.history, size: 72, color: Theme.of(context).colorScheme.outline),
           const SizedBox(height: 16),
-          Text('Noch keine Historie',
-              style: Theme.of(context).textTheme.titleLarge),
+          Text(l.historyEmpty, style: Theme.of(context).textTheme.titleLarge),
           const SizedBox(height: 8),
-          const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 40),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 40),
             child: Text(
-              'Sobald du eine Erinnerung als erledigt markierst, '
-              'landet sie hier.',
+              l.historyEmptyHint,
               textAlign: TextAlign.center,
             ),
           ),
@@ -113,9 +116,10 @@ class _HistoryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
     final cs = Theme.of(context).colorScheme;
     final type = ReminderType.fromString(entry.type);
-    final fmt = DateFormat('dd.MM.yyyy', 'de');
+    final fmt = DateFormat('dd.MM.yyyy');
 
     return Card(
       margin: const EdgeInsets.only(bottom: 10),
@@ -133,25 +137,31 @@ class _HistoryCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    reminderLabel(type, customLabel: entry.customLabel),
+                    reminderLabel(l, type, customLabel: entry.customLabel),
                     style: const TextStyle(fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 2),
-                  Text('Erledigt am ${fmt.format(entry.completedDate)}'),
-                  Text('Kilometerstand: ${_km(entry.mileageAtCompletion)} km',
-                      style: Theme.of(context).textTheme.bodySmall),
+                  Text(l.historyCompletedOn(fmt.format(entry.completedDate))),
+                  Text(
+                    l.historyMileageAt(_km(entry.mileageAtCompletion)),
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
                   if (entry.workshopName != null)
-                    Text('Werkstatt: ${entry.workshopName}',
-                        style: Theme.of(context).textTheme.bodySmall),
+                    Text(
+                      l.historyWorkshop(entry.workshopName!),
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
                   if (entry.cost != null)
-                    Text('Kosten: ${entry.cost!.toStringAsFixed(2)} €',
-                        style: Theme.of(context).textTheme.bodySmall),
+                    Text(
+                      l.historyCost(entry.cost!.toStringAsFixed(2)),
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
                 ],
               ),
             ),
             IconButton(
               icon: Icon(Icons.delete_outline, color: cs.error),
-              tooltip: 'Löschen',
+              tooltip: l.commonDelete,
               onPressed: onDelete,
             ),
           ],

@@ -1,3 +1,4 @@
+import 'package:auto_mate/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -14,46 +15,26 @@ class _Question {
   const _Question({required this.text, required this.options});
 }
 
-const _questions = [
+List<_Question> _buildQuestions(AppLocalizations l) => [
   _Question(
-    text: 'Eine Warnleuchte leuchtet auf. Was machst du?',
-    options: [
-      'Direkt zur Werkstatt – lieber auf Nummer sicher gehen.',
-      'Ich schlage die Bedeutung nach und entscheide dann selbst.',
-      'Ich lese den Fehlercode mit einem OBD-Gerät aus und analysiere ihn.',
-    ],
+    text: l.skillQuiz1Question,
+    options: [l.skillQuiz1Answer1, l.skillQuiz1Answer2, l.skillQuiz1Answer3],
   ),
   _Question(
-    text: 'Wann prüfst du selbst den Motorölstand?',
-    options: [
-      'Nie – das erledigt die Werkstatt beim nächsten Service.',
-      'Gelegentlich, vor langen Fahrten oder wenn ich mal daran denke.',
-      'Regelmäßig – ich kenne den typischen Ölverbrauch meines Motors genau.',
-    ],
+    text: l.skillQuiz2Question,
+    options: [l.skillQuiz2Answer1, l.skillQuiz2Answer2, l.skillQuiz2Answer3],
   ),
   _Question(
-    text: 'Hast du schon selbst an deinem Auto gearbeitet?',
-    options: [
-      'Nein, das überlasse ich immer dem Fachmann.',
-      'Ja, einfache Sachen wie Scheibenwischer, Glühbirnen oder Luftfilter.',
-      'Ja, auch komplexere Arbeiten – z. B. Bremsen, Kupplung oder Fahrwerk.',
-    ],
+    text: l.skillQuiz3Question,
+    options: [l.skillQuiz3Answer1, l.skillQuiz3Answer2, l.skillQuiz3Answer3],
   ),
   _Question(
-    text: 'Dein Auto macht ein unbekanntes Geräusch. Was tust du zuerst?',
-    options: [
-      'Werkstatt anrufen – ich möchte kein Risiko eingehen.',
-      'Ich versuche das Geräusch zu beschreiben und suche online nach Ursachen.',
-      'Ich lokalisiere das Geräusch systematisch und prüfe betroffene Bauteile selbst.',
-    ],
+    text: l.skillQuiz4Question,
+    options: [l.skillQuiz4Answer1, l.skillQuiz4Answer2, l.skillQuiz4Answer3],
   ),
   _Question(
-    text: 'Wie vertraut bist du mit dem Motorraum deines Autos?',
-    options: [
-      'Ich öffne die Motorhaube eigentlich nur zum Scheibenwasser nachfüllen.',
-      'Ich kenne die wichtigsten Teile und prüfe regelmäßig Öl- und Kühlmittelstand.',
-      'Ich kenne Aufbau und Funktion und kann viele Teile eigenständig wechseln.',
-    ],
+    text: l.skillQuiz5Question,
+    options: [l.skillQuiz5Answer1, l.skillQuiz5Answer2, l.skillQuiz5Answer3],
   ),
 ];
 
@@ -81,9 +62,9 @@ class _SkillQuizScreenState extends ConsumerState<SkillQuizScreen> {
 
   void _select(int optionIndex) => setState(() => _answers[_current] = optionIndex);
 
-  void _next() {
+  void _next(List<_Question> questions) {
     if (_answers[_current] == null) return;
-    if (_current < _questions.length - 1) {
+    if (_current < questions.length - 1) {
       setState(() => _current++);
     } else {
       final level = _calcLevel(_answers.map((a) => a ?? 0).toList());
@@ -97,6 +78,8 @@ class _SkillQuizScreenState extends ConsumerState<SkillQuizScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
+    final questions = _buildQuestions(l);
     final userAsync = ref.watch(currentUserProvider);
     final firstName = userAsync.valueOrNull?.name.split(' ').first ?? '';
 
@@ -111,15 +94,14 @@ class _SkillQuizScreenState extends ConsumerState<SkillQuizScreen> {
               if (_current == 0) ...[
                 const SizedBox(height: 16),
                 Text(
-                  firstName.isNotEmpty ? 'Hallo, $firstName!' : 'Hallo!',
+                  firstName.isNotEmpty ? l.skillQuizHello(firstName) : l.skillQuizHelloGeneric,
                   style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                         fontWeight: FontWeight.bold,
                       ),
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Damit AutoMate dir die passenden Empfehlungen geben kann, '
-                  'beantworte kurz 5 Fragen. Dauert weniger als eine Minute.',
+                  l.skillQuizIntro,
                   style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                         color: Theme.of(context).colorScheme.outline,
                       ),
@@ -130,7 +112,7 @@ class _SkillQuizScreenState extends ConsumerState<SkillQuizScreen> {
 
               // Progress bar
               Row(
-                children: List.generate(_questions.length, (i) {
+                children: List.generate(questions.length, (i) {
                   final isDone = i < _current;
                   final isActive = i == _current;
                   return Expanded(
@@ -150,7 +132,7 @@ class _SkillQuizScreenState extends ConsumerState<SkillQuizScreen> {
               ),
               const SizedBox(height: 8),
               Text(
-                'Frage ${_current + 1} von ${_questions.length}',
+                l.skillQuizProgress(_current + 1, questions.length),
                 style: Theme.of(context).textTheme.labelSmall?.copyWith(
                       color: Theme.of(context).colorScheme.outline,
                     ),
@@ -164,7 +146,7 @@ class _SkillQuizScreenState extends ConsumerState<SkillQuizScreen> {
                   key: ValueKey(_current),
                   alignment: Alignment.centerLeft,
                   child: Text(
-                    _questions[_current].text,
+                    questions[_current].text,
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
                           fontWeight: FontWeight.w600,
                           height: 1.35,
@@ -181,9 +163,9 @@ class _SkillQuizScreenState extends ConsumerState<SkillQuizScreen> {
                   child: ListView(
                     key: ValueKey('opts_$_current'),
                     children: List.generate(
-                      _questions[_current].options.length,
+                      questions[_current].options.length,
                       (i) => _OptionTile(
-                        text: _questions[_current].options[i],
+                        text: questions[_current].options[i],
                         selected: _answers[_current] == i,
                         onTap: () => _select(i),
                       ),
@@ -200,23 +182,23 @@ class _SkillQuizScreenState extends ConsumerState<SkillQuizScreen> {
                     if (_current > 0)
                       TextButton.icon(
                         icon: const Icon(Icons.arrow_back, size: 18),
-                        label: const Text('Zurück'),
+                        label: Text(l.commonBack),
                         onPressed: _back,
                       ),
                     const Spacer(),
                     FilledButton.icon(
                       icon: Icon(
-                        _current == _questions.length - 1
+                        _current == questions.length - 1
                             ? Icons.check
                             : Icons.arrow_forward,
                         size: 18,
                       ),
                       label: Text(
-                        _current == _questions.length - 1
-                            ? 'Auswerten'
-                            : 'Weiter',
+                        _current == questions.length - 1
+                            ? l.skillQuizEvaluate
+                            : l.skillQuizNext,
                       ),
-                      onPressed: _answers[_current] != null ? _next : null,
+                      onPressed: _answers[_current] != null ? () => _next(questions) : null,
                     ),
                   ],
                 ),

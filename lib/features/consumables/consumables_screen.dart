@@ -1,3 +1,4 @@
+import 'package:auto_mate/l10n/app_localizations.dart';
 import 'package:drift/drift.dart' show Value;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -22,27 +23,24 @@ class ConsumablesScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l = AppLocalizations.of(context);
     final consumablesAsync = ref.watch(_consumablesProvider(vehicleId));
     final vehicleAsync = ref.watch(_vehicleProvider(vehicleId));
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Verbrauchsmaterial'),
+        title: Text(l.consumablesTitle),
         actions: [
           IconButton(
             icon: const Icon(Icons.edit_outlined),
-            tooltip: 'Bearbeiten',
-            onPressed: () => _openEditor(
-              context,
-              ref,
-              consumablesAsync.valueOrNull,
-            ),
+            tooltip: l.commonEdit,
+            onPressed: () => _openEditor(context, ref, consumablesAsync.valueOrNull),
           ),
         ],
       ),
       body: consumablesAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('Fehler: $e')),
+        error: (e, _) => Center(child: Text(l.commonError(e.toString()))),
         data: (data) {
           if (data == null) return _Empty(onAdd: () => _openEditor(context, ref, null));
           final vehicle = vehicleAsync.valueOrNull;
@@ -74,6 +72,7 @@ class _Empty extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -84,21 +83,19 @@ class _Empty extends StatelessWidget {
             color: Theme.of(context).colorScheme.outline,
           ),
           const SizedBox(height: 16),
-          Text('Noch keine Specs',
-              style: Theme.of(context).textTheme.titleLarge),
+          Text(l.consumablesEmpty, style: Theme.of(context).textTheme.titleLarge),
           const SizedBox(height: 8),
-          const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 40),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 40),
             child: Text(
-              'Hinterlege Öl-, Kühlmittel- und Bremsflüssigkeits-Specs deines '
-              'Autos, damit du sie beim Werkstattbesuch parat hast.',
+              l.consumablesEmptyHint,
               textAlign: TextAlign.center,
             ),
           ),
           const SizedBox(height: 24),
           FilledButton.icon(
             icon: const Icon(Icons.add),
-            label: const Text('Specs hinzufügen'),
+            label: Text(l.consumablesAddButton),
             onPressed: onAdd,
           ),
         ],
@@ -114,6 +111,7 @@ class _Content extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
     final cs = Theme.of(context).colorScheme;
     return ListView(
       padding: const EdgeInsets.all(20),
@@ -129,8 +127,9 @@ class _Content extends StatelessWidget {
                 Expanded(
                   child: Text(
                     vehicle != null
-                        ? 'Specs für ${vehicle!.year} ${vehicle!.make} ${vehicle!.model} — tippe auf „Kopieren", um sie an die Werkstatt zu schicken.'
-                        : 'Specs für die Werkstatt — tippe auf „Kopieren", um sie weiterzugeben.',
+                        ? l.consumablesHintWithVehicle(
+                            vehicle!.year, vehicle!.make, vehicle!.model)
+                        : l.consumablesHintGeneral,
                     style: Theme.of(context).textTheme.bodySmall,
                   ),
                 ),
@@ -139,53 +138,45 @@ class _Content extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 16),
-        _SpecRow(icon: Icons.oil_barrel, label: 'Motoröl', value: data.engineOilGrade),
+        _SpecRow(icon: Icons.oil_barrel, label: l.consumablesEngineOil, value: data.engineOilGrade),
         _SpecRow(
           icon: Icons.water_drop,
-          label: 'Öl-Füllmenge',
+          label: l.consumablesOilVolume,
           value: '${data.engineOilVolume.toStringAsFixed(1)} l',
         ),
-        _SpecRow(
-          icon: Icons.local_drink,
-          label: 'Kühlmittel',
-          value: data.coolantType,
-        ),
-        _SpecRow(
-          icon: Icons.opacity,
-          label: 'Bremsflüssigkeit',
-          value: data.brakeFluidSpec,
-        ),
-        _SpecRow(
-          icon: Icons.settings,
-          label: 'Getriebeöl',
-          value: data.transmissionFluid,
-        ),
+        _SpecRow(icon: Icons.local_drink, label: l.consumablesCoolant, value: data.coolantType),
+        _SpecRow(icon: Icons.opacity, label: l.consumablesBrakeFluid, value: data.brakeFluidSpec),
+        _SpecRow(icon: Icons.settings, label: l.consumablesTransmissionFluid, value: data.transmissionFluid),
         const SizedBox(height: 16),
         OutlinedButton.icon(
           icon: const Icon(Icons.copy_all_outlined),
-          label: const Text('Alle Specs kopieren'),
-          onPressed: () => _copyAll(context),
+          label: Text(l.consumablesCopyAll),
+          onPressed: () => _copyAll(context, l),
         ),
       ],
     );
   }
 
-  String _buildTextPayload() {
+  String _buildTextPayload(AppLocalizations l) {
     final v = vehicle;
-    final header = v != null ? '${v.year} ${v.make} ${v.model}' : 'Fahrzeug';
-    return '''AutoMate – $header
-Motoröl: ${data.engineOilGrade}
-Öl-Füllmenge: ${data.engineOilVolume.toStringAsFixed(1)} l
-Kühlmittel: ${data.coolantType}
-Bremsflüssigkeit: ${data.brakeFluidSpec}
-Getriebeöl: ${data.transmissionFluid}''';
+    final header = v != null
+        ? '${v.year} ${v.make} ${v.model}'
+        : l.consumablesTitle;
+    return [
+      l.consumablesCopyHeader(header),
+      l.consumablesCopyOilGrade(data.engineOilGrade),
+      l.consumablesCopyOilVolume(data.engineOilVolume.toStringAsFixed(1)),
+      l.consumablesCopyCoolant(data.coolantType),
+      l.consumablesCopyBrakeFluid(data.brakeFluidSpec),
+      l.consumablesCopyTransFluid(data.transmissionFluid),
+    ].join('\n');
   }
 
-  Future<void> _copyAll(BuildContext context) async {
-    await Clipboard.setData(ClipboardData(text: _buildTextPayload()));
+  Future<void> _copyAll(BuildContext context, AppLocalizations l) async {
+    await Clipboard.setData(ClipboardData(text: _buildTextPayload(l)));
     if (!context.mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Specs in die Zwischenablage kopiert')),
+      SnackBar(content: Text(l.consumablesCopied)),
     );
   }
 }
@@ -293,40 +284,45 @@ class _ConsumablesEditorScreenState
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
     return Scaffold(
-      appBar: AppBar(title: Text(widget.existing == null ? 'Specs anlegen' : 'Specs bearbeiten')),
+      appBar: AppBar(
+        title: Text(widget.existing == null
+            ? l.consumablesCreateTitle
+            : l.consumablesEditTitle),
+      ),
       body: ListView(
         padding: const EdgeInsets.all(20),
         children: [
           _Field(
             controller: _oil,
-            label: 'Motoröl-Viskosität',
-            hint: 'z. B. 5W-30',
+            label: l.consumablesOilGradeLabel,
+            hint: l.consumablesOilGradePlaceholder,
             icon: Icons.oil_barrel,
           ),
           _Field(
             controller: _oilVol,
-            label: 'Öl-Füllmenge (Liter)',
-            hint: 'z. B. 4.5',
+            label: l.consumablesOilVolumeLabel,
+            hint: l.consumablesOilVolumePlaceholder,
             icon: Icons.water_drop,
             numeric: true,
           ),
           _Field(
             controller: _coolant,
-            label: 'Kühlmittel',
-            hint: 'z. B. G12++',
+            label: l.consumablesCoolantLabel,
+            hint: l.consumablesCoolantPlaceholder,
             icon: Icons.local_drink,
           ),
           _Field(
             controller: _brake,
-            label: 'Bremsflüssigkeit',
-            hint: 'z. B. DOT 4',
+            label: l.consumablesBrakeFluidLabel,
+            hint: l.consumablesBrakeFluidPlaceholder,
             icon: Icons.opacity,
           ),
           _Field(
             controller: _trans,
-            label: 'Getriebeöl',
-            hint: 'z. B. ATF 3+',
+            label: l.consumablesTransFluidLabel,
+            hint: l.consumablesTransFluidPlaceholder,
             icon: Icons.settings,
           ),
           const SizedBox(height: 24),
@@ -338,7 +334,7 @@ class _ConsumablesEditorScreenState
                     child: CircularProgressIndicator(strokeWidth: 2),
                   )
                 : const Icon(Icons.save),
-            label: Text(_saving ? 'Speichere ...' : 'Speichern'),
+            label: Text(_saving ? l.commonSaving : l.commonSave),
             onPressed: _saving ? null : _save,
           ),
         ],

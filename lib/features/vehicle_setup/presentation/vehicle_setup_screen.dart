@@ -1,3 +1,4 @@
+import 'package:auto_mate/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -10,19 +11,20 @@ class VehicleSetupScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l = AppLocalizations.of(context);
     final form = ref.watch(vehicleFormProvider);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Fahrzeug hinzufügen')),
+      appBar: AppBar(title: Text(l.vehicleSetupTitle)),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _SectionLabel('Fahrzeugdaten'),
+            _SectionLabel(l.vehicleSetupSectionData),
             const SizedBox(height: 4),
             Text(
-              'Grunddaten deines Autos. Ohne VIN kein Problem — die ist optional.',
+              l.vehicleSetupSectionHint,
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: Theme.of(context).colorScheme.outline,
                   ),
@@ -91,13 +93,14 @@ class _YearPicker extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l = AppLocalizations.of(context);
     final years = ref.watch(yearOptionsProvider);
 
     return DropdownButtonFormField<int>(
-      decoration: const InputDecoration(
-        labelText: 'Baujahr *',
-        border: OutlineInputBorder(),
-        prefixIcon: Icon(Icons.calendar_today),
+      decoration: InputDecoration(
+        labelText: l.vehicleSetupYear,
+        border: const OutlineInputBorder(),
+        prefixIcon: const Icon(Icons.calendar_today),
       ),
       initialValue: form.year,
       items: years
@@ -125,6 +128,7 @@ class _MakeSearch extends ConsumerStatefulWidget {
 class _MakeSearchState extends ConsumerState<_MakeSearch> {
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
     final makesAsync = ref.watch(makesProvider);
     final makes = makesAsync.valueOrNull ?? [];
 
@@ -144,11 +148,10 @@ class _MakeSearchState extends ConsumerState<_MakeSearch> {
           controller: controller,
           focusNode: focusNode,
           decoration: InputDecoration(
-            labelText: 'Marke *',
+            labelText: l.vehicleSetupMake,
             border: const OutlineInputBorder(),
             prefixIcon: const Icon(Icons.directions_car),
-            hintText:
-                makesAsync.isLoading ? 'Lade ...' : 'z. B. Ford, Toyota, BMW',
+            hintText: makesAsync.isLoading ? l.vehicleSetupMakeLoading : l.vehicleSetupMakePlaceholder,
           ),
           onChanged: (v) {
             ref.read(vehicleFormProvider.notifier).setMake(v);
@@ -172,6 +175,7 @@ class _ModelSearch extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l = AppLocalizations.of(context);
     final make = form.make;
     final modelsAsync = ref.watch(availableModelsProvider);
     final models = modelsAsync.valueOrNull ?? [];
@@ -193,11 +197,10 @@ class _ModelSearch extends ConsumerWidget {
           focusNode: focusNode,
           enabled: make != null,
           decoration: InputDecoration(
-            labelText: make == null ? 'Modell * (erst Marke wählen)' : 'Modell *',
+            labelText: make == null ? l.vehicleSetupModelDisabled : l.vehicleSetupModel,
             border: const OutlineInputBorder(),
             prefixIcon: const Icon(Icons.directions_car_outlined),
-            hintText:
-                modelsAsync.isLoading ? 'Lade ...' : 'z. B. Golf, Corolla, 3er',
+            hintText: modelsAsync.isLoading ? l.vehicleSetupMakeLoading : l.vehicleSetupModelPlaceholder,
           ),
           onChanged: (v) {
             ref.read(vehicleFormProvider.notifier).setModel(v);
@@ -258,13 +261,14 @@ class _VinField extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l = AppLocalizations.of(context);
     return TextFormField(
       initialValue: vin,
-      decoration: const InputDecoration(
-        labelText: 'Fahrgestellnummer (optional)',
-        border: OutlineInputBorder(),
-        prefixIcon: Icon(Icons.qr_code),
-        helperText: '17-stellige VIN, findest du im Fahrzeugschein',
+      decoration: InputDecoration(
+        labelText: l.vehicleSetupVin,
+        border: const OutlineInputBorder(),
+        prefixIcon: const Icon(Icons.qr_code),
+        helperText: l.vehicleSetupVinHint,
       ),
       maxLength: 17,
       textCapitalization: TextCapitalization.characters,
@@ -277,26 +281,19 @@ class _FuelTypePicker extends ConsumerWidget {
   final FuelType selected;
   const _FuelTypePicker({required this.selected});
 
-  String _label(FuelType ft) => switch (ft) {
-        FuelType.petrol => 'Benzin',
-        FuelType.diesel => 'Diesel',
-        FuelType.electric => 'Elektro',
-        FuelType.hybrid => 'Hybrid',
-        FuelType.other => 'Sonstiges',
-      };
-
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l = AppLocalizations.of(context);
     return DropdownButtonFormField<FuelType>(
-      decoration: const InputDecoration(
-        labelText: 'Kraftstoff *',
-        border: OutlineInputBorder(),
-        prefixIcon: Icon(Icons.local_gas_station),
+      decoration: InputDecoration(
+        labelText: l.vehicleSetupFuel,
+        border: const OutlineInputBorder(),
+        prefixIcon: const Icon(Icons.local_gas_station),
       ),
       initialValue: selected,
       items: FuelType.values
           .map((ft) =>
-              DropdownMenuItem(value: ft, child: Text(_label(ft))))
+              DropdownMenuItem(value: ft, child: Text(_fuelLabel(l, ft))))
           .toList(),
       onChanged: (ft) {
         if (ft != null) {
@@ -305,6 +302,14 @@ class _FuelTypePicker extends ConsumerWidget {
       },
     );
   }
+
+  String _fuelLabel(AppLocalizations l, FuelType ft) => switch (ft) {
+        FuelType.petrol => l.fuelTypePetrol,
+        FuelType.diesel => l.fuelTypeDiesel,
+        FuelType.electric => l.fuelTypeElectric,
+        FuelType.hybrid => l.fuelTypeHybrid,
+        FuelType.other => l.fuelTypeOther,
+      };
 }
 
 class _MileageField extends ConsumerWidget {
@@ -313,13 +318,14 @@ class _MileageField extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l = AppLocalizations.of(context);
     return TextFormField(
       initialValue: mileage > 0 ? '$mileage' : '',
       keyboardType: TextInputType.number,
-      decoration: const InputDecoration(
-        labelText: 'Aktueller Kilometerstand *',
-        border: OutlineInputBorder(),
-        prefixIcon: Icon(Icons.speed),
+      decoration: InputDecoration(
+        labelText: l.vehicleSetupMileage,
+        border: const OutlineInputBorder(),
+        prefixIcon: const Icon(Icons.speed),
         suffixText: 'km',
       ),
       onChanged: (v) {
@@ -336,15 +342,16 @@ class _AnnualKmField extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l = AppLocalizations.of(context);
     return TextFormField(
       initialValue: value != null ? '$value' : '',
       keyboardType: TextInputType.number,
-      decoration: const InputDecoration(
-        labelText: 'Geschätzte Kilometer pro Jahr (optional)',
-        border: OutlineInputBorder(),
-        prefixIcon: Icon(Icons.route),
-        suffixText: 'km/Jahr',
-        helperText: 'Hilft bei der Berechnung von Wartungsintervallen',
+      decoration: InputDecoration(
+        labelText: l.vehicleSetupAnnualKm,
+        border: const OutlineInputBorder(),
+        prefixIcon: const Icon(Icons.route),
+        suffixText: l.vehicleSetupAnnualKmSuffix,
+        helperText: l.vehicleSetupAnnualKmHint,
       ),
       onChanged: (v) {
         final km = int.tryParse(v.trim());
@@ -364,6 +371,7 @@ class _SaveButton extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l = AppLocalizations.of(context);
     return SizedBox(
       width: double.infinity,
       child: FilledButton.icon(
@@ -375,7 +383,7 @@ class _SaveButton extends ConsumerWidget {
                     strokeWidth: 2, color: Colors.white),
               )
             : const Icon(Icons.check),
-        label: Text(form.isSaving ? 'Speichere ...' : 'Fahrzeug speichern'),
+        label: Text(form.isSaving ? l.vehicleSetupSavingButton : l.vehicleSetupSaveButton),
         onPressed: form.isValid && !form.isSaving
             ? () async {
                 final ok =

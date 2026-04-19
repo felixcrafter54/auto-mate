@@ -1,3 +1,4 @@
+import 'package:auto_mate/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:youtube_player_iframe/youtube_player_iframe.dart';
 
@@ -58,12 +59,9 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
                   style: Theme.of(context).textTheme.titleLarge,
                 ),
               ),
-              const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 16),
-                child: Text(
-                  'Tipp: Sieh dir das Video einmal komplett an, bevor du loslegst. '
-                  'Notiere benötigte Werkzeuge und Teile.',
-                ),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Text(AppLocalizations.of(context).videoPlayerTip),
               ),
             ],
           ),

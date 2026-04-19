@@ -1,3 +1,4 @@
+import 'package:auto_mate/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -11,10 +12,11 @@ class SkillResultScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l = AppLocalizations.of(context);
     final userAsync = ref.watch(currentUserProvider);
     final firstName = userAsync.valueOrNull?.name.split(' ').first ?? '';
 
-    final meta = _levelMeta(context, detectedLevel);
+    final meta = _levelMeta(context, l, detectedLevel);
 
     return Scaffold(
       body: SafeArea(
@@ -35,7 +37,7 @@ class SkillResultScreen extends ConsumerWidget {
               ),
               const SizedBox(height: 28),
               Text(
-                'Dein Skill-Level:',
+                l.skillResultTitle,
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
                       color: Theme.of(context).colorScheme.outline,
                     ),
@@ -58,8 +60,8 @@ class SkillResultScreen extends ConsumerWidget {
               const SizedBox(height: 48),
               Text(
                 firstName.isNotEmpty
-                    ? 'Passt das für dich, $firstName?'
-                    : 'Passt das für dich?',
+                    ? l.skillResultFitsQuestion(firstName)
+                    : l.skillResultFitsQuestionNoName,
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.w600,
                     ),
@@ -69,7 +71,7 @@ class SkillResultScreen extends ConsumerWidget {
                 width: double.infinity,
                 child: FilledButton.icon(
                   icon: const Icon(Icons.check),
-                  label: const Text('Ja, das passt!'),
+                  label: Text(l.skillResultYes),
                   onPressed: () async {
                     await ref
                         .read(profileNotifierProvider.notifier)
@@ -83,8 +85,8 @@ class SkillResultScreen extends ConsumerWidget {
                 width: double.infinity,
                 child: OutlinedButton.icon(
                   icon: const Icon(Icons.tune),
-                  label: const Text('Nein, ich möchte es anpassen'),
-                  onPressed: () => _showLevelPicker(context, ref),
+                  label: Text(l.skillResultNo),
+                  onPressed: () => _showLevelPicker(context, ref, l),
                 ),
               ),
               const SizedBox(height: 24),
@@ -95,49 +97,52 @@ class SkillResultScreen extends ConsumerWidget {
     );
   }
 
-  void _showLevelPicker(BuildContext context, WidgetRef ref) {
+  void _showLevelPicker(BuildContext context, WidgetRef ref, AppLocalizations l) {
     showModalBottomSheet(
       context: context,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      builder: (ctx) => Padding(
-        padding: const EdgeInsets.fromLTRB(24, 24, 24, 32),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Wähle dein Level',
-              style: Theme.of(ctx).textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Du kannst es jederzeit im Profil anpassen.',
-              style: Theme.of(ctx).textTheme.bodyMedium?.copyWith(
-                    color: Theme.of(ctx).colorScheme.outline,
-                  ),
-            ),
-            const SizedBox(height: 20),
-            ...SkillLevel.values.map((level) {
-              final m = _levelMeta(ctx, level);
-              return _LevelTile(
-                meta: m,
-                selected: level == detectedLevel,
-                onTap: () async {
-                  Navigator.pop(ctx);
-                  await ref
-                      .read(profileNotifierProvider.notifier)
-                      .completeOnboarding(level);
-                  if (context.mounted) context.go('/');
-                },
-              );
-            }),
-          ],
-        ),
-      ),
+      builder: (ctx) {
+        final lCtx = AppLocalizations.of(ctx);
+        return Padding(
+          padding: const EdgeInsets.fromLTRB(24, 24, 24, 32),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                lCtx.skillResultSelectLevel,
+                style: Theme.of(ctx).textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                lCtx.skillResultAdjustLater,
+                style: Theme.of(ctx).textTheme.bodyMedium?.copyWith(
+                      color: Theme.of(ctx).colorScheme.outline,
+                    ),
+              ),
+              const SizedBox(height: 20),
+              ...SkillLevel.values.map((level) {
+                final m = _levelMeta(ctx, lCtx, level);
+                return _LevelTile(
+                  meta: m,
+                  selected: level == detectedLevel,
+                  onTap: () async {
+                    Navigator.pop(ctx);
+                    await ref
+                        .read(profileNotifierProvider.notifier)
+                        .completeOnboarding(level);
+                    if (context.mounted) context.go('/');
+                  },
+                );
+              }),
+            ],
+          ),
+        );
+      },
     );
   }
 }
@@ -161,37 +166,28 @@ class _LevelMeta {
   });
 }
 
-_LevelMeta _levelMeta(BuildContext context, SkillLevel level) {
+_LevelMeta _levelMeta(BuildContext context, AppLocalizations l, SkillLevel level) {
   final cs = Theme.of(context).colorScheme;
   return switch (level) {
     SkillLevel.beginner => _LevelMeta(
         icon: Icons.school_outlined,
-        label: 'Einsteiger',
-        description:
-            'Du verlässt dich auf Fachleute – das ist klug und sicher. '
-            'AutoMate gibt dir klare Hinweise, wann du in die Werkstatt solltest, '
-            'und erklärt alles verständlich ohne Fachchinesisch.',
-        shortDesc: 'Werkstatt-Empfehlungen, einfache Erklärungen',
+        label: l.skillLevelBeginner,
+        description: l.skillResultBeginnerDesc,
+        shortDesc: l.skillResultBeginnerFeatures,
         color: cs.tertiary,
       ),
     SkillLevel.intermediate => _LevelMeta(
         icon: Icons.build_outlined,
-        label: 'Fortgeschritten',
-        description:
-            'Du kennst dein Auto gut und packst gerne selbst mit an. '
-            'AutoMate zeigt dir passende Repair-Tutorials und hilft dir, '
-            'die richtigen Teile zu finden – Schritt für Schritt.',
-        shortDesc: 'Tutorials, DIY mit Anleitung',
+        label: l.skillLevelIntermediate,
+        description: l.skillResultIntermediateDesc,
+        shortDesc: l.skillResultIntermediateFeatures,
         color: cs.primary,
       ),
     SkillLevel.pro => _LevelMeta(
         icon: Icons.engineering_outlined,
-        label: 'Profi',
-        description:
-            'Du weißt genau, was unter der Motorhaube passiert. '
-            'AutoMate liefert dir technische Details, Fehlercodes im Rohformat '
-            'und volle Kontrolle – ganz ohne Vereinfachungen.',
-        shortDesc: 'Technische Details, OBD-Daten, volle Kontrolle',
+        label: l.skillLevelPro,
+        description: l.skillResultProDesc,
+        shortDesc: l.skillResultProFeatures,
         color: cs.error,
       ),
   };

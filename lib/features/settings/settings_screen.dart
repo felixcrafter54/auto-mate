@@ -1,3 +1,4 @@
+import 'package:auto_mate/l10n/app_localizations.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -48,6 +49,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   }
 
   Future<void> _save() async {
+    final l = AppLocalizations.of(context);
     final svc = ref.read(settingsServiceProvider);
     await svc.set(kSettingGeminiApiKey, _geminiCtrl.text.trim());
     await svc.set(kSettingYoutubeApiKey, _youtubeCtrl.text.trim());
@@ -59,21 +61,21 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     ref.invalidate(defaultNotifyOffsetsProvider);
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Einstellungen gespeichert')),
+      SnackBar(content: Text(l.settingsSaved)),
     );
   }
 
   Future<void> _requestNotifyPermission() async {
+    final l = AppLocalizations.of(context);
     final granted = await NotificationService().requestPermission();
     if (!mounted) return;
     setState(() => _notifyPermissionGranted = granted);
     if (!granted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: const Text(
-              'Berechtigung abgelehnt. Öffne die Systemeinstellungen, um sie zu erlauben.'),
+          content: Text(l.settingsPermissionDenied),
           action: SnackBarAction(
-            label: 'Einstellungen',
+            label: l.settingsTitle,
             onPressed: () => NotificationService().openSystemSettings(),
           ),
         ),
@@ -82,6 +84,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   }
 
   Future<void> _scheduleTwoMinuteTest() async {
+    final l = AppLocalizations.of(context);
     final svc = NotificationService();
     var granted = await svc.hasPermission();
     if (!granted) granted = await svc.requestPermission();
@@ -89,39 +92,37 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     setState(() => _notifyPermissionGranted = granted);
     if (!granted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Benachrichtigungen nicht erlaubt.')),
+        SnackBar(content: Text(l.settingsPermissionError)),
       );
       return;
     }
     final when = DateTime.now().add(const Duration(minutes: 2));
     try {
-      // Cancel any previous test so a second tap overwrites the first.
       await svc.cancel(999998);
       await svc.schedule(
         id: 999998,
         title: 'AutoMate · Test',
-        body: 'Geplante Benachrichtigung nach 2 Minuten. 🎉',
+        body: l.settingsScheduledNotification,
         when: when,
       );
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            kIsWeb
-                ? 'Test in 2 Min geplant — die PWA muss offen bleiben.'
-                : 'Test in 2 Min geplant.',
+            kIsWeb ? l.settingsScheduledPwa : l.settingsScheduledMobile,
           ),
         ),
       );
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Planung fehlgeschlagen: $e')),
+        SnackBar(content: Text(l.settingsScheduleFailed(e.toString()))),
       );
     }
   }
 
   Future<void> _sendTestNotification() async {
+    final l = AppLocalizations.of(context);
     final svc = NotificationService();
     var granted = await svc.hasPermission();
     if (!granted) granted = await svc.requestPermission();
@@ -129,20 +130,18 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     setState(() => _notifyPermissionGranted = granted);
     if (!granted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Benachrichtigungen nicht erlaubt.'),
-        ),
+        SnackBar(content: Text(l.settingsPermissionError)),
       );
       return;
     }
     await svc.showNow(
       id: 999999,
       title: 'AutoMate · Test',
-      body: 'Benachrichtigungen funktionieren. 🎉',
+      body: l.settingsNotificationsWork,
     );
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Test-Benachrichtigung gesendet')),
+      SnackBar(content: Text(l.settingsTestSent)),
     );
   }
 
@@ -155,12 +154,12 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     });
   }
 
-  String _offsetLabel(int days) {
-    if (days == 1) return '1 Tag';
-    if (days < 7) return '$days Tage';
-    if (days == 7) return '1 Woche';
-    if (days % 7 == 0) return '${days ~/ 7} Wochen';
-    return '$days Tage';
+  String _offsetLabel(AppLocalizations l, int days) {
+    if (days == 1) return l.addReminderDay;
+    if (days < 7) return l.addReminderDays(days);
+    if (days == 7) return l.addReminderWeek;
+    if (days % 7 == 0) return l.addReminderWeeks(days ~/ 7);
+    return l.addReminderDays(days);
   }
 
   @override
@@ -179,18 +178,18 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       );
     }
 
+    final l = AppLocalizations.of(context);
     final cs = Theme.of(context).colorScheme;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Einstellungen')),
+      appBar: AppBar(title: Text(l.settingsTitle)),
       body: ListView(
         padding: const EdgeInsets.all(20),
         children: [
-          _SectionTitle('API-Schlüssel'),
+          _SectionTitle(l.settingsApiKeysSection),
           const SizedBox(height: 4),
           Text(
-            'Die Schlüssel werden nur lokal auf deinem Gerät gespeichert. '
-            'Du brauchst sie, um die KI-Features und die YouTube-Tutorials zu nutzen.',
+            l.settingsApiKeysHint,
             style: Theme.of(context)
                 .textTheme
                 .bodySmall
@@ -203,8 +202,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             controller: _geminiCtrl,
             obscureText: !_revealGemini,
             decoration: InputDecoration(
-              labelText: 'Gemini API-Key (Google AI)',
-              hintText: 'AIza...',
+              labelText: l.settingsGeminiKeyLabel,
+              hintText: l.settingsGeminiKeyHint,
               border: const OutlineInputBorder(),
               prefixIcon: const Icon(Icons.psychology_outlined),
               suffixIcon: IconButton(
@@ -216,7 +215,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           const SizedBox(height: 6),
           TextButton.icon(
             icon: const Icon(Icons.open_in_new, size: 16),
-            label: const Text('Key bei Google AI Studio anlegen'),
+            label: Text(l.settingsGeminiKeyLink),
             onPressed: () => _open('https://aistudio.google.com/app/apikey'),
           ),
           const SizedBox(height: 16),
@@ -226,27 +225,25 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             controller: _youtubeCtrl,
             obscureText: !_revealYoutube,
             decoration: InputDecoration(
-              labelText: 'YouTube Data API v3 Key',
-              hintText: 'AIza...',
+              labelText: l.settingsYouTubeKeyLabel,
+              hintText: l.settingsGeminiKeyHint,
               border: const OutlineInputBorder(),
               prefixIcon: const Icon(Icons.play_circle_outline),
               suffixIcon: IconButton(
-                icon:
-                    Icon(_revealYoutube ? Icons.visibility_off : Icons.visibility),
-                onPressed: () =>
-                    setState(() => _revealYoutube = !_revealYoutube),
+                icon: Icon(_revealYoutube ? Icons.visibility_off : Icons.visibility),
+                onPressed: () => setState(() => _revealYoutube = !_revealYoutube),
               ),
             ),
           ),
           const SizedBox(height: 6),
           TextButton.icon(
             icon: const Icon(Icons.open_in_new, size: 16),
-            label: const Text('Key bei Google Cloud anlegen'),
+            label: Text(l.settingsYouTubeKeyLink),
             onPressed: () => _open('https://console.cloud.google.com/apis/credentials'),
           ),
           const SizedBox(height: 28),
 
-          _SectionTitle('Benachrichtigungen'),
+          _SectionTitle(l.settingsNotificationsSection),
           const SizedBox(height: 8),
           Card(
             color: _notifyPermissionGranted
@@ -260,36 +257,36 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 color: _notifyPermissionGranted ? cs.primary : cs.error,
               ),
               title: Text(_notifyPermissionGranted
-                  ? 'Benachrichtigungen sind aktiv'
-                  : 'Benachrichtigungen sind deaktiviert'),
+                  ? l.settingsNotificationsActive
+                  : l.settingsNotificationsDisabled),
               subtitle: Text(_notifyPermissionGranted
                   ? (kIsWeb
-                      ? 'Fallen nur, solange die PWA geöffnet ist.'
-                      : 'Du bekommst Erinnerungen zu fälligen Wartungen.')
-                  : 'Ohne Berechtigung kann AutoMate dich nicht erinnern.'),
+                      ? l.settingsPwaNotificationsHint
+                      : l.settingsNotificationsActiveHint)
+                  : l.settingsNotificationsNoPermission),
               trailing: _notifyPermissionGranted
                   ? null
                   : FilledButton(
                       onPressed: _requestNotifyPermission,
-                      child: const Text('Erlauben'),
+                      child: Text(l.settingsAllowNotifications),
                     ),
             ),
           ),
           const SizedBox(height: 8),
           OutlinedButton.icon(
             icon: const Icon(Icons.notifications_outlined),
-            label: const Text('Test-Benachrichtigung senden'),
+            label: Text(l.settingsSendTestNotification),
             onPressed: _sendTestNotification,
           ),
           const SizedBox(height: 6),
           OutlinedButton.icon(
             icon: const Icon(Icons.timer_outlined),
-            label: const Text('Geplanten Test in 2 Minuten'),
+            label: Text(l.settingsScheduleTestNotification),
             onPressed: _scheduleTwoMinuteTest,
           ),
           const SizedBox(height: 12),
           Text(
-            'Standard-Erinnerungszeitpunkte vor Fälligkeit. Lässt sich pro Erinnerung überschreiben.',
+            l.settingsDefaultRemindersHint,
             style: Theme.of(context)
                 .textTheme
                 .bodySmall
@@ -304,7 +301,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   .toList()
                 ..sort((a, b) => a.compareTo(b)))
                 FilterChip(
-                  label: Text(_offsetLabel(d)),
+                  label: Text(_offsetLabel(l, d)),
                   selected: _notifyOffsets.contains(d),
                   onSelected: (sel) => setState(() {
                     if (sel) {
@@ -323,10 +320,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 child: TextField(
                   controller: _customOffsetCtrl,
                   keyboardType: TextInputType.number,
-                  decoration: const InputDecoration(
-                    labelText: 'Eigener Zeitpunkt',
-                    border: OutlineInputBorder(),
-                    suffixText: 'Tage',
+                  decoration: InputDecoration(
+                    labelText: l.addReminderCustomTimeLabel,
+                    border: const OutlineInputBorder(),
+                    suffixText: l.addReminderDaysSuffix,
                     isDense: true,
                   ),
                   onSubmitted: (_) => _addCustomOffset(),
@@ -336,28 +333,28 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               IconButton.filledTonal(
                 onPressed: _addCustomOffset,
                 icon: const Icon(Icons.add),
-                tooltip: 'Hinzufügen',
+                tooltip: l.commonAdd,
               ),
             ],
           ),
           const SizedBox(height: 28),
 
-          _SectionTitle('Werkstattbericht'),
+          _SectionTitle(l.settingsReportSection),
           const SizedBox(height: 12),
           DropdownButtonFormField<String>(
-            decoration: const InputDecoration(
-              labelText: 'Berichtsprache',
-              border: OutlineInputBorder(),
-              prefixIcon: Icon(Icons.translate),
-              helperText: 'Nützlich wenn du im Ausland liegen bleibst.',
+            decoration: InputDecoration(
+              labelText: l.settingsReportLanguageLabel,
+              border: const OutlineInputBorder(),
+              prefixIcon: const Icon(Icons.translate),
+              helperText: l.settingsReportLanguageHint,
             ),
             initialValue: _language,
-            items: const [
-              DropdownMenuItem(value: 'de', child: Text('Deutsch')),
-              DropdownMenuItem(value: 'en', child: Text('Englisch')),
-              DropdownMenuItem(value: 'fr', child: Text('Französisch')),
-              DropdownMenuItem(value: 'es', child: Text('Spanisch')),
-              DropdownMenuItem(value: 'it', child: Text('Italienisch')),
+            items: [
+              DropdownMenuItem(value: 'de', child: Text(l.settingsLangDe)),
+              DropdownMenuItem(value: 'en', child: Text(l.settingsLangEn)),
+              DropdownMenuItem(value: 'fr', child: Text(l.settingsLangFr)),
+              DropdownMenuItem(value: 'es', child: Text(l.settingsLangEs)),
+              DropdownMenuItem(value: 'it', child: Text(l.settingsLangIt)),
             ],
             onChanged: (v) => setState(() => _language = v ?? 'de'),
           ),
@@ -365,7 +362,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
           FilledButton.icon(
             icon: const Icon(Icons.save),
-            label: const Text('Speichern'),
+            label: Text(l.settingsSaveButton),
             onPressed: _save,
           ),
 
@@ -381,8 +378,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     const SizedBox(width: 12),
                     Expanded(
                       child: Text(
-                        'Du nutzt die Web-Version. Sprach-Assistent, OBD-II und Kamera-Scan '
-                        'funktionieren nur in der Mobile-App.',
+                        l.settingsWebWarning,
                         style: TextStyle(color: cs.onTertiaryContainer),
                       ),
                     ),

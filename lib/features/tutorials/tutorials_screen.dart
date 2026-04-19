@@ -1,3 +1,4 @@
+import 'package:auto_mate/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -53,16 +54,17 @@ class _TutorialsScreenState extends ConsumerState<TutorialsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
     final vehicleAsync = ref.watch(_vehicleProvider(widget.vehicleId));
     final skill = ref.watch(skillLevelProvider);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Reparatur-Tutorials')),
+      appBar: AppBar(title: Text(l.tutorialsTitle)),
       body: vehicleAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('Fehler: $e')),
+        error: (e, _) => Center(child: Text(l.commonError(e.toString()))),
         data: (vehicle) {
-          if (vehicle == null) return const Center(child: Text('Kein Fahrzeug'));
+          if (vehicle == null) return Center(child: Text(l.tutorialsNoVehicle));
           return Column(
             children: [
               _SearchBar(
@@ -92,13 +94,14 @@ class _SearchBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Für: ${vehicle.year} ${vehicle.make} ${vehicle.model}',
+            l.tutorialsVehicleLabel(vehicle.year, vehicle.make, vehicle.model),
             style: Theme.of(context)
                 .textTheme
                 .bodySmall
@@ -108,7 +111,7 @@ class _SearchBar extends StatelessWidget {
           TextField(
             controller: controller,
             decoration: InputDecoration(
-              hintText: 'z. B. Bremsen wechseln, Ölwechsel, Zündkerzen',
+              hintText: l.tutorialsSearchPlaceholder,
               border: const OutlineInputBorder(),
               prefixIcon: const Icon(Icons.search),
               suffixIcon: IconButton(
@@ -128,24 +131,21 @@ class _SkillBanner extends StatelessWidget {
   final SkillLevel skill;
   const _SkillBanner({required this.skill});
 
-  String get _hint => switch (skill) {
-        SkillLevel.beginner =>
-          'Einsteiger-Tipp: Arbeite bei komplexen Reparaturen lieber mit einer Werkstatt.',
-        SkillLevel.intermediate =>
-          'Lesbare Schritt-für-Schritt-Videos für dein Level werden bevorzugt.',
-        SkillLevel.pro =>
-          'Für dich: Suche ruhig spezifische Begriffe (z. B. "ZKD wechseln").',
-      };
-
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
+    final hint = switch (skill) {
+      SkillLevel.beginner => l.tutorialsBeginnerTip,
+      SkillLevel.intermediate => l.tutorialsIntermediateTip,
+      SkillLevel.pro => l.tutorialsProTip,
+    };
     final cs = Theme.of(context).colorScheme;
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
       color: cs.secondaryContainer,
       child: Text(
-        _hint,
+        hint,
         style: TextStyle(color: cs.onSecondaryContainer, fontSize: 12),
       ),
     );
@@ -159,6 +159,8 @@ class _Results extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
+
     if (error != null) {
       return Padding(
         padding: const EdgeInsets.all(24),
@@ -175,13 +177,10 @@ class _Results extends StatelessWidget {
     }
 
     if (future == null) {
-      return const Center(
+      return Center(
         child: Padding(
-          padding: EdgeInsets.all(24),
-          child: Text(
-            'Gib oben ein, was du reparieren willst, und wir suchen passende Videos.',
-            textAlign: TextAlign.center,
-          ),
+          padding: const EdgeInsets.all(24),
+          child: Text(l.tutorialsEmptyHint, textAlign: TextAlign.center),
         ),
       );
     }
@@ -193,10 +192,14 @@ class _Results extends StatelessWidget {
           return const Center(child: CircularProgressIndicator());
         }
         if (snap.hasError) {
-          return Center(child: Text('Fehler: ${snap.error}'));
+          return Center(
+            child: Text(l.commonError(snap.error.toString())),
+          );
         }
         final items = snap.data ?? [];
-        if (items.isEmpty) return const Center(child: Text('Nichts gefunden'));
+        if (items.isEmpty) {
+          return Center(child: Text(l.tutorialsNothingFound));
+        }
         return ListView.builder(
           padding: const EdgeInsets.all(16),
           itemCount: items.length,
@@ -217,8 +220,7 @@ class _VideoCard extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 12),
       clipBehavior: Clip.antiAlias,
       child: InkWell(
-        onTap: () => context.push('/video/${video.id}',
-            extra: video.title),
+        onTap: () => context.push('/video/${video.id}', extra: video.title),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -232,8 +234,7 @@ class _VideoCard extends StatelessWidget {
                     child: CircleAvatar(
                       radius: 28,
                       backgroundColor: Colors.black54,
-                      child: Icon(Icons.play_arrow,
-                          color: Colors.white, size: 32),
+                      child: Icon(Icons.play_arrow, color: Colors.white, size: 32),
                     ),
                   ),
                 ],
@@ -253,7 +254,7 @@ class _VideoCard extends StatelessWidget {
                       )),
                   const SizedBox(height: 4),
                   Text(
-                    '${video.channel} · ${DateFormat('dd.MM.yyyy', 'de').format(video.publishedAt)}',
+                    '${video.channel} · ${DateFormat('dd.MM.yyyy').format(video.publishedAt)}',
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
                           color: Theme.of(context).colorScheme.outline,
                         ),

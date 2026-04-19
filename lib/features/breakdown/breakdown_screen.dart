@@ -1,3 +1,4 @@
+import 'package:auto_mate/l10n/app_localizations.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -28,7 +29,6 @@ class _BreakdownScreenState extends ConsumerState<BreakdownScreen> {
   final List<GeminiMessage> _messages = [];
   bool _sending = false;
 
-  // Voice
   final stt.SpeechToText _speech = stt.SpeechToText();
   final FlutterTts _tts = FlutterTts();
   bool _speechAvailable = false;
@@ -78,6 +78,7 @@ class _BreakdownScreenState extends ConsumerState<BreakdownScreen> {
   }
 
   Future<void> _send(Vehicle vehicle, SkillLevel skill) async {
+    final l = AppLocalizations.of(context);
     final text = _inputCtrl.text.trim();
     if (text.isEmpty) return;
     _inputCtrl.clear();
@@ -118,7 +119,7 @@ class _BreakdownScreenState extends ConsumerState<BreakdownScreen> {
       setState(() {
         _messages.add(GeminiMessage(
           role: 'assistant',
-          content: 'Fehler: $e',
+          content: l.commonError(e.toString()),
         ));
         _sending = false;
       });
@@ -140,17 +141,18 @@ class _BreakdownScreenState extends ConsumerState<BreakdownScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
     final vehicleAsync = ref.watch(_vehicleProvider(widget.vehicleId));
     final skill = ref.watch(skillLevelProvider) ?? SkillLevel.beginner;
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Pannen-Assistent'),
+        title: Text(l.breakdownTitle),
         actions: [
           if (!kIsWeb)
             IconButton(
               icon: Icon(_ttsEnabled ? Icons.volume_up : Icons.volume_off),
-              tooltip: 'Sprachausgabe',
+              tooltip: l.breakdownTts,
               onPressed: () async {
                 setState(() => _ttsEnabled = !_ttsEnabled);
                 if (!_ttsEnabled) await _tts.stop();
@@ -158,7 +160,7 @@ class _BreakdownScreenState extends ConsumerState<BreakdownScreen> {
             ),
           IconButton(
             icon: const Icon(Icons.local_hospital_outlined),
-            tooltip: 'Werkstatt finden',
+            tooltip: l.breakdownFindGarage,
             onPressed: () =>
                 context.push('/vehicle/${widget.vehicleId}/garages'),
           ),
@@ -166,9 +168,9 @@ class _BreakdownScreenState extends ConsumerState<BreakdownScreen> {
       ),
       body: vehicleAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('Fehler: $e')),
+        error: (e, _) => Center(child: Text(l.commonError(e.toString()))),
         data: (vehicle) {
-          if (vehicle == null) return const Center(child: Text('Kein Fahrzeug'));
+          if (vehicle == null) return Center(child: Text(l.breakdownNoVehicle));
           return Column(
             children: [
               Expanded(
@@ -209,22 +211,23 @@ class _EmptyIntro extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
     final cs = Theme.of(context).colorScheme;
     final examples = switch (skill) {
       SkillLevel.beginner => [
-          'Die Motorkontrollleuchte blinkt gelb',
-          'Das Auto springt nicht an',
-          'Ich höre ein Quietschen beim Bremsen',
+          l.breakdownExample1Beginner,
+          l.breakdownExample2Beginner,
+          l.breakdownExample3Beginner,
         ],
       SkillLevel.intermediate => [
-          'Fehlercode P0420 — was tun?',
-          'Bremsen wechseln — was brauche ich?',
-          'Ölwechsel selbst machen, was beachten?',
+          l.breakdownExample1Intermediate,
+          l.breakdownExample2Intermediate,
+          l.breakdownExample3Intermediate,
         ],
       SkillLevel.pro => [
-          'Lambda-Sonde vorne vs. hinten — Unterschiede',
-          'Kompressionswerte Bank 1 niedrig, Diagnoseschritte',
-          'Zweimassenschwungrad wechseln — Werkzeuge',
+          l.breakdownExample1Pro,
+          l.breakdownExample2Pro,
+          l.breakdownExample3Pro,
         ],
     };
 
@@ -236,13 +239,13 @@ class _EmptyIntro extends StatelessWidget {
           Icon(Icons.mic_none, size: 56, color: cs.primary),
           const SizedBox(height: 12),
           Text(
-            'Was ist los mit deinem ${vehicle.make}?',
+            l.breakdownPlaceholder(vehicle.make),
             style: Theme.of(context).textTheme.titleLarge,
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 8),
           Text(
-            'Sprich oder tippe dein Problem. Beispiele:',
+            l.breakdownExamplesTitle,
             style: Theme.of(context).textTheme.bodyMedium,
             textAlign: TextAlign.center,
           ),
@@ -262,8 +265,7 @@ class _EmptyIntro extends StatelessWidget {
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Text(
-                'Sprachsteuerung und Sprachausgabe sind nur in der Mobile-App verfügbar. '
-                'Im Browser kannst du trotzdem tippen.',
+                l.breakdownWebWarning,
                 style: TextStyle(color: cs.onTertiaryContainer),
                 textAlign: TextAlign.center,
               ),
@@ -362,6 +364,7 @@ class _InputBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
     return SafeArea(
       child: Padding(
         padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
@@ -379,9 +382,9 @@ class _InputBar extends StatelessWidget {
                 controller: controller,
                 minLines: 1,
                 maxLines: 4,
-                decoration: const InputDecoration(
-                  hintText: 'Problem beschreiben ...',
-                  border: OutlineInputBorder(),
+                decoration: InputDecoration(
+                  hintText: l.breakdownInputPlaceholder,
+                  border: const OutlineInputBorder(),
                   isDense: true,
                 ),
                 textInputAction: TextInputAction.send,

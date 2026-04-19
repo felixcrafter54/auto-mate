@@ -3,6 +3,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'core/router/router.dart';
 import 'core/theme/app_theme.dart';
+import 'l10n/app_localizations.dart';
 
 class AutoMateApp extends ConsumerWidget {
   const AutoMateApp({super.key});
@@ -18,16 +19,13 @@ class AutoMateApp extends ConsumerWidget {
       themeMode: ThemeMode.system,
       routerConfig: goRouter,
       debugShowCheckedModeBanner: false,
-      locale: const Locale('de'),
-      supportedLocales: const [
-        Locale('de'),
-        Locale('en'),
-      ],
       localizationsDelegates: const [
+        AppLocalizations.delegate,
         GlobalMaterialLocalizations.delegate,
         GlobalWidgetsLocalizations.delegate,
         GlobalCupertinoLocalizations.delegate,
       ],
+      supportedLocales: AppLocalizations.supportedLocales,
     );
   }
 }
