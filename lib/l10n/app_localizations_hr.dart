@@ -1178,4 +1178,16 @@ class AppLocalizationsHr extends AppLocalizations {
   @override
   String get garageFinderNoLocation =>
       'Lokacija nije dostupna — pretraživanje oko centra Hrvatske.';
+
+  @override
+  String get settingsAppLanguageSection => 'Jezik aplikacije';
+
+  @override
+  String get settingsAppLanguageLabel => 'Jezik sučelja';
+
+  @override
+  String get settingsAppLanguageSystem => 'Zadano sustava';
+
+  @override
+  String get settingsLangHr => 'Hrvatski';
 }

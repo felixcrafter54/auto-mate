@@ -1183,4 +1183,16 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get garageFinderNoLocation =>
       'Location unavailable — searching around centre of Germany.';
+
+  @override
+  String get settingsAppLanguageSection => 'App language';
+
+  @override
+  String get settingsAppLanguageLabel => 'Interface language';
+
+  @override
+  String get settingsAppLanguageSystem => 'System default';
+
+  @override
+  String get settingsLangHr => 'Croatian';
 }

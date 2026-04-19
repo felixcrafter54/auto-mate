@@ -1191,4 +1191,16 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get garageFinderNoLocation =>
       'Kein Standort verfügbar — Suche um Deutschland-Mitte.';
+
+  @override
+  String get settingsAppLanguageSection => 'App-Sprache';
+
+  @override
+  String get settingsAppLanguageLabel => 'Anzeigesprache';
+
+  @override
+  String get settingsAppLanguageSystem => 'Systemsprache';
+
+  @override
+  String get settingsLangHr => 'Kroatisch';
 }

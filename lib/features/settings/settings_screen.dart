@@ -1,8 +1,10 @@
 import 'package:auto_mate/l10n/app_localizations.dart';
+import 'package:country_flags/country_flags.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../../core/providers/locale_provider.dart';
 import '../../services/notification_service.dart';
 import '../../services/settings_service.dart';
 
@@ -18,6 +20,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   final _youtubeCtrl = TextEditingController();
   final _customOffsetCtrl = TextEditingController();
   String _language = 'de';
+  Locale? _appLocale;
   Set<int> _notifyOffsets = {56, 28, 7};
   bool _notifyPermissionGranted = false;
   bool _loading = true;
@@ -37,11 +40,13 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     final lang = await svc.getReportLanguage();
     final offsets = await svc.getDefaultNotifyOffsets();
     final permGranted = await NotificationService().hasPermission();
+    final localeCode = await svc.get(kSettingAppLocale);
     if (!mounted) return;
     setState(() {
       _geminiCtrl.text = gemini ?? '';
       _youtubeCtrl.text = yt ?? '';
       _language = lang;
+      _appLocale = localeCode != null && localeCode.isNotEmpty ? Locale(localeCode) : null;
       _notifyOffsets = offsets.toSet();
       _notifyPermissionGranted = permGranted;
       _loading = false;
@@ -55,6 +60,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     await svc.set(kSettingYoutubeApiKey, _youtubeCtrl.text.trim());
     await svc.set(kSettingReportLanguage, _language);
     await svc.setDefaultNotifyOffsets(_notifyOffsets.toList());
+    await ref.read(localeNotifierProvider.notifier).setLocale(_appLocale);
     ref.invalidate(geminiKeyProvider);
     ref.invalidate(youtubeKeyProvider);
     ref.invalidate(reportLanguageProvider);
@@ -336,6 +342,55 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 tooltip: l.commonAdd,
               ),
             ],
+          ),
+          const SizedBox(height: 28),
+
+          _SectionTitle(l.settingsAppLanguageSection),
+          const SizedBox(height: 12),
+          DropdownButtonFormField<String?>(
+            decoration: InputDecoration(
+              labelText: l.settingsAppLanguageLabel,
+              border: const OutlineInputBorder(),
+              prefixIcon: const Icon(Icons.language),
+            ),
+            initialValue: _appLocale?.languageCode,
+            items: [
+              DropdownMenuItem(
+                value: null,
+                child: Row(children: [
+                  const Icon(Icons.language, size: 24),
+                  const SizedBox(width: 10),
+                  Text(l.settingsAppLanguageSystem),
+                ]),
+              ),
+              DropdownMenuItem(
+                value: 'de',
+                child: Row(children: [
+                  CountryFlag.fromCountryCode('DE', height: 20, width: 28, shape: const RoundedRectangle(4)),
+                  const SizedBox(width: 10),
+                  Text(l.settingsLangDe),
+                ]),
+              ),
+              DropdownMenuItem(
+                value: 'en',
+                child: Row(children: [
+                  CountryFlag.fromCountryCode('GB', height: 20, width: 28, shape: const RoundedRectangle(4)),
+                  const SizedBox(width: 10),
+                  Text(l.settingsLangEn),
+                ]),
+              ),
+              DropdownMenuItem(
+                value: 'hr',
+                child: Row(children: [
+                  CountryFlag.fromCountryCode('HR', height: 20, width: 28, shape: const RoundedRectangle(4)),
+                  const SizedBox(width: 10),
+                  Text(l.settingsLangHr),
+                ]),
+              ),
+            ],
+            onChanged: (v) => setState(
+              () => _appLocale = v != null ? Locale(v) : null,
+            ),
           ),
           const SizedBox(height: 28),
 

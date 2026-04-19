@@ -371,5 +371,10 @@
   "garageFinderTitle": "Werkstätten in der Nähe",
   "garageFinderDefault": "Werkstatt",
   "garageFinderFound": "{count} Werkstätten gefunden",
-  "garageFinderNoLocation": "Kein Standort verfügbar — Suche um Deutschland-Mitte."
+  "garageFinderNoLocation": "Kein Standort verfügbar — Suche um Deutschland-Mitte.",
+
+  "settingsAppLanguageSection": "App-Sprache",
+  "settingsAppLanguageLabel": "Anzeigesprache",
+  "settingsAppLanguageSystem": "Systemsprache",
+  "settingsLangHr": "Kroatisch"
 }

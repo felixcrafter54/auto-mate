@@ -516,5 +516,10 @@
   "@garageFinderFound": {
     "placeholders": { "count": { "type": "int" } }
   },
-  "garageFinderNoLocation": "Location unavailable — searching around centre of Germany."
+  "garageFinderNoLocation": "Location unavailable — searching around centre of Germany.",
+
+  "settingsAppLanguageSection": "App language",
+  "settingsAppLanguageLabel": "Interface language",
+  "settingsAppLanguageSystem": "System default",
+  "settingsLangHr": "Croatian"
 }

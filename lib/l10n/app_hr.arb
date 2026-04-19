@@ -371,5 +371,10 @@
   "garageFinderTitle": "Servisi u blizini",
   "garageFinderDefault": "Servis",
   "garageFinderFound": "Pronađeno {count} servisa",
-  "garageFinderNoLocation": "Lokacija nije dostupna — pretraživanje oko centra Hrvatske."
+  "garageFinderNoLocation": "Lokacija nije dostupna — pretraživanje oko centra Hrvatske.",
+
+  "settingsAppLanguageSection": "Jezik aplikacije",
+  "settingsAppLanguageLabel": "Jezik sučelja",
+  "settingsAppLanguageSystem": "Zadano sustava",
+  "settingsLangHr": "Hrvatski"
 }

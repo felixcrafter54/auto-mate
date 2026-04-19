@@ -87,6 +87,9 @@ dependencies:
   url_launcher: ^6.3.0
   geolocator: ^14.0.2
 
+  # Flag icons for language picker
+  country_flags: ^3.0.0
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

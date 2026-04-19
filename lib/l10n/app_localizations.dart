@@ -2151,6 +2151,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Location unavailable — searching around centre of Germany.'**
   String get garageFinderNoLocation;
+
+  /// No description provided for @settingsAppLanguageSection.
+  ///
+  /// In en, this message translates to:
+  /// **'App language'**
+  String get settingsAppLanguageSection;
+
+  /// No description provided for @settingsAppLanguageLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Interface language'**
+  String get settingsAppLanguageLabel;
+
+  /// No description provided for @settingsAppLanguageSystem.
+  ///
+  /// In en, this message translates to:
+  /// **'System default'**
+  String get settingsAppLanguageSystem;
+
+  /// No description provided for @settingsLangHr.
+  ///
+  /// In en, this message translates to:
+  /// **'Croatian'**
+  String get settingsLangHr;
 }
 
 class _AppLocalizationsDelegate
