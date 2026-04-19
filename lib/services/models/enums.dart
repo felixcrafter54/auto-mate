@@ -53,4 +53,47 @@ enum FuelType {
       orElse: () => FuelType.other,
     );
   }
+
+  /// Whether this fuel type uses liquid fuel and supports a fuel log.
+  bool get supportsFuelLog =>
+      this == FuelType.petrol ||
+      this == FuelType.diesel ||
+      this == FuelType.hybrid;
+
+  /// Applicable fuel grades for vehicles of this type.
+  List<FuelGrade> get applicableGrades => switch (this) {
+        FuelType.diesel => [FuelGrade.dieselB7, FuelGrade.dieselPremium],
+        FuelType.hybrid => [
+            FuelGrade.superE5,
+            FuelGrade.superE10,
+            FuelGrade.superPlus,
+            FuelGrade.premium,
+          ],
+        _ => [
+            FuelGrade.superE5,
+            FuelGrade.superE10,
+            FuelGrade.superPlus,
+            FuelGrade.premium,
+          ],
+      };
+}
+
+/// Grade / product of fuel that was refuelled.
+enum FuelGrade {
+  superE5('super_e5'),
+  superE10('super_e10'),
+  superPlus('super_plus'),
+  premium('premium'),
+  dieselB7('diesel_b7'),
+  dieselPremium('diesel_premium');
+
+  final String value;
+  const FuelGrade(this.value);
+
+  factory FuelGrade.fromString(String value) {
+    return FuelGrade.values.firstWhere(
+      (e) => e.value == value,
+      orElse: () => FuelGrade.superE5,
+    );
+  }
 }

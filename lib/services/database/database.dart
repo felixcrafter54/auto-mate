@@ -41,6 +41,9 @@ class FuelEntries extends Table {
   DateTimeColumn get date => dateTime()();
   RealColumn get liters => real()();
   IntColumn get odometerKm => integer()();
+  TextColumn get fuelGrade => text().nullable()(); // FuelGrade.value
+  RealColumn get pricePerLiter => real().nullable()();
+  BoolColumn get fullTank => boolean().withDefault(const Constant(false))();
 }
 
 /// Maintenance reminders table
@@ -109,7 +112,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 
   @override
-  int get schemaVersion => 8;
+  int get schemaVersion => 9;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -139,6 +142,11 @@ class AppDatabase extends _$AppDatabase {
           }
           if (from < 8) {
             await m.addColumn(maintenanceHistoryTable, maintenanceHistoryTable.customLabel);
+          }
+          if (from < 9) {
+            await m.addColumn(fuelEntries, fuelEntries.fuelGrade);
+            await m.addColumn(fuelEntries, fuelEntries.pricePerLiter);
+            await m.addColumn(fuelEntries, fuelEntries.fullTank);
           }
         },
       );

@@ -3168,6 +3168,43 @@ class $FuelEntriesTable extends FuelEntries
     type: DriftSqlType.int,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _fuelGradeMeta = const VerificationMeta(
+    'fuelGrade',
+  );
+  @override
+  late final GeneratedColumn<String> fuelGrade = GeneratedColumn<String>(
+    'fuel_grade',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _pricePerLiterMeta = const VerificationMeta(
+    'pricePerLiter',
+  );
+  @override
+  late final GeneratedColumn<double> pricePerLiter = GeneratedColumn<double>(
+    'price_per_liter',
+    aliasedName,
+    true,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _fullTankMeta = const VerificationMeta(
+    'fullTank',
+  );
+  @override
+  late final GeneratedColumn<bool> fullTank = GeneratedColumn<bool>(
+    'full_tank',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("full_tank" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -3175,6 +3212,9 @@ class $FuelEntriesTable extends FuelEntries
     date,
     liters,
     odometerKm,
+    fuelGrade,
+    pricePerLiter,
+    fullTank,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -3223,6 +3263,27 @@ class $FuelEntriesTable extends FuelEntries
     } else if (isInserting) {
       context.missing(_odometerKmMeta);
     }
+    if (data.containsKey('fuel_grade')) {
+      context.handle(
+        _fuelGradeMeta,
+        fuelGrade.isAcceptableOrUnknown(data['fuel_grade']!, _fuelGradeMeta),
+      );
+    }
+    if (data.containsKey('price_per_liter')) {
+      context.handle(
+        _pricePerLiterMeta,
+        pricePerLiter.isAcceptableOrUnknown(
+          data['price_per_liter']!,
+          _pricePerLiterMeta,
+        ),
+      );
+    }
+    if (data.containsKey('full_tank')) {
+      context.handle(
+        _fullTankMeta,
+        fullTank.isAcceptableOrUnknown(data['full_tank']!, _fullTankMeta),
+      );
+    }
     return context;
   }
 
@@ -3252,6 +3313,18 @@ class $FuelEntriesTable extends FuelEntries
         DriftSqlType.int,
         data['${effectivePrefix}odometer_km'],
       )!,
+      fuelGrade: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}fuel_grade'],
+      ),
+      pricePerLiter: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}price_per_liter'],
+      ),
+      fullTank: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}full_tank'],
+      )!,
     );
   }
 
@@ -3267,12 +3340,18 @@ class FuelEntry extends DataClass implements Insertable<FuelEntry> {
   final DateTime date;
   final double liters;
   final int odometerKm;
+  final String? fuelGrade;
+  final double? pricePerLiter;
+  final bool fullTank;
   const FuelEntry({
     required this.id,
     required this.vehicleId,
     required this.date,
     required this.liters,
     required this.odometerKm,
+    this.fuelGrade,
+    this.pricePerLiter,
+    required this.fullTank,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -3282,6 +3361,13 @@ class FuelEntry extends DataClass implements Insertable<FuelEntry> {
     map['date'] = Variable<DateTime>(date);
     map['liters'] = Variable<double>(liters);
     map['odometer_km'] = Variable<int>(odometerKm);
+    if (!nullToAbsent || fuelGrade != null) {
+      map['fuel_grade'] = Variable<String>(fuelGrade);
+    }
+    if (!nullToAbsent || pricePerLiter != null) {
+      map['price_per_liter'] = Variable<double>(pricePerLiter);
+    }
+    map['full_tank'] = Variable<bool>(fullTank);
     return map;
   }
 
@@ -3292,6 +3378,13 @@ class FuelEntry extends DataClass implements Insertable<FuelEntry> {
       date: Value(date),
       liters: Value(liters),
       odometerKm: Value(odometerKm),
+      fuelGrade: fuelGrade == null && nullToAbsent
+          ? const Value.absent()
+          : Value(fuelGrade),
+      pricePerLiter: pricePerLiter == null && nullToAbsent
+          ? const Value.absent()
+          : Value(pricePerLiter),
+      fullTank: Value(fullTank),
     );
   }
 
@@ -3306,6 +3399,9 @@ class FuelEntry extends DataClass implements Insertable<FuelEntry> {
       date: serializer.fromJson<DateTime>(json['date']),
       liters: serializer.fromJson<double>(json['liters']),
       odometerKm: serializer.fromJson<int>(json['odometerKm']),
+      fuelGrade: serializer.fromJson<String?>(json['fuelGrade']),
+      pricePerLiter: serializer.fromJson<double?>(json['pricePerLiter']),
+      fullTank: serializer.fromJson<bool>(json['fullTank']),
     );
   }
   @override
@@ -3317,6 +3413,9 @@ class FuelEntry extends DataClass implements Insertable<FuelEntry> {
       'date': serializer.toJson<DateTime>(date),
       'liters': serializer.toJson<double>(liters),
       'odometerKm': serializer.toJson<int>(odometerKm),
+      'fuelGrade': serializer.toJson<String?>(fuelGrade),
+      'pricePerLiter': serializer.toJson<double?>(pricePerLiter),
+      'fullTank': serializer.toJson<bool>(fullTank),
     };
   }
 
@@ -3326,12 +3425,20 @@ class FuelEntry extends DataClass implements Insertable<FuelEntry> {
     DateTime? date,
     double? liters,
     int? odometerKm,
+    Value<String?> fuelGrade = const Value.absent(),
+    Value<double?> pricePerLiter = const Value.absent(),
+    bool? fullTank,
   }) => FuelEntry(
     id: id ?? this.id,
     vehicleId: vehicleId ?? this.vehicleId,
     date: date ?? this.date,
     liters: liters ?? this.liters,
     odometerKm: odometerKm ?? this.odometerKm,
+    fuelGrade: fuelGrade.present ? fuelGrade.value : this.fuelGrade,
+    pricePerLiter: pricePerLiter.present
+        ? pricePerLiter.value
+        : this.pricePerLiter,
+    fullTank: fullTank ?? this.fullTank,
   );
   FuelEntry copyWithCompanion(FuelEntriesCompanion data) {
     return FuelEntry(
@@ -3342,6 +3449,11 @@ class FuelEntry extends DataClass implements Insertable<FuelEntry> {
       odometerKm: data.odometerKm.present
           ? data.odometerKm.value
           : this.odometerKm,
+      fuelGrade: data.fuelGrade.present ? data.fuelGrade.value : this.fuelGrade,
+      pricePerLiter: data.pricePerLiter.present
+          ? data.pricePerLiter.value
+          : this.pricePerLiter,
+      fullTank: data.fullTank.present ? data.fullTank.value : this.fullTank,
     );
   }
 
@@ -3352,13 +3464,25 @@ class FuelEntry extends DataClass implements Insertable<FuelEntry> {
           ..write('vehicleId: $vehicleId, ')
           ..write('date: $date, ')
           ..write('liters: $liters, ')
-          ..write('odometerKm: $odometerKm')
+          ..write('odometerKm: $odometerKm, ')
+          ..write('fuelGrade: $fuelGrade, ')
+          ..write('pricePerLiter: $pricePerLiter, ')
+          ..write('fullTank: $fullTank')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(id, vehicleId, date, liters, odometerKm);
+  int get hashCode => Object.hash(
+    id,
+    vehicleId,
+    date,
+    liters,
+    odometerKm,
+    fuelGrade,
+    pricePerLiter,
+    fullTank,
+  );
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -3367,7 +3491,10 @@ class FuelEntry extends DataClass implements Insertable<FuelEntry> {
           other.vehicleId == this.vehicleId &&
           other.date == this.date &&
           other.liters == this.liters &&
-          other.odometerKm == this.odometerKm);
+          other.odometerKm == this.odometerKm &&
+          other.fuelGrade == this.fuelGrade &&
+          other.pricePerLiter == this.pricePerLiter &&
+          other.fullTank == this.fullTank);
 }
 
 class FuelEntriesCompanion extends UpdateCompanion<FuelEntry> {
@@ -3376,12 +3503,18 @@ class FuelEntriesCompanion extends UpdateCompanion<FuelEntry> {
   final Value<DateTime> date;
   final Value<double> liters;
   final Value<int> odometerKm;
+  final Value<String?> fuelGrade;
+  final Value<double?> pricePerLiter;
+  final Value<bool> fullTank;
   const FuelEntriesCompanion({
     this.id = const Value.absent(),
     this.vehicleId = const Value.absent(),
     this.date = const Value.absent(),
     this.liters = const Value.absent(),
     this.odometerKm = const Value.absent(),
+    this.fuelGrade = const Value.absent(),
+    this.pricePerLiter = const Value.absent(),
+    this.fullTank = const Value.absent(),
   });
   FuelEntriesCompanion.insert({
     this.id = const Value.absent(),
@@ -3389,6 +3522,9 @@ class FuelEntriesCompanion extends UpdateCompanion<FuelEntry> {
     required DateTime date,
     required double liters,
     required int odometerKm,
+    this.fuelGrade = const Value.absent(),
+    this.pricePerLiter = const Value.absent(),
+    this.fullTank = const Value.absent(),
   }) : vehicleId = Value(vehicleId),
        date = Value(date),
        liters = Value(liters),
@@ -3399,6 +3535,9 @@ class FuelEntriesCompanion extends UpdateCompanion<FuelEntry> {
     Expression<DateTime>? date,
     Expression<double>? liters,
     Expression<int>? odometerKm,
+    Expression<String>? fuelGrade,
+    Expression<double>? pricePerLiter,
+    Expression<bool>? fullTank,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -3406,6 +3545,9 @@ class FuelEntriesCompanion extends UpdateCompanion<FuelEntry> {
       if (date != null) 'date': date,
       if (liters != null) 'liters': liters,
       if (odometerKm != null) 'odometer_km': odometerKm,
+      if (fuelGrade != null) 'fuel_grade': fuelGrade,
+      if (pricePerLiter != null) 'price_per_liter': pricePerLiter,
+      if (fullTank != null) 'full_tank': fullTank,
     });
   }
 
@@ -3415,6 +3557,9 @@ class FuelEntriesCompanion extends UpdateCompanion<FuelEntry> {
     Value<DateTime>? date,
     Value<double>? liters,
     Value<int>? odometerKm,
+    Value<String?>? fuelGrade,
+    Value<double?>? pricePerLiter,
+    Value<bool>? fullTank,
   }) {
     return FuelEntriesCompanion(
       id: id ?? this.id,
@@ -3422,6 +3567,9 @@ class FuelEntriesCompanion extends UpdateCompanion<FuelEntry> {
       date: date ?? this.date,
       liters: liters ?? this.liters,
       odometerKm: odometerKm ?? this.odometerKm,
+      fuelGrade: fuelGrade ?? this.fuelGrade,
+      pricePerLiter: pricePerLiter ?? this.pricePerLiter,
+      fullTank: fullTank ?? this.fullTank,
     );
   }
 
@@ -3443,6 +3591,15 @@ class FuelEntriesCompanion extends UpdateCompanion<FuelEntry> {
     if (odometerKm.present) {
       map['odometer_km'] = Variable<int>(odometerKm.value);
     }
+    if (fuelGrade.present) {
+      map['fuel_grade'] = Variable<String>(fuelGrade.value);
+    }
+    if (pricePerLiter.present) {
+      map['price_per_liter'] = Variable<double>(pricePerLiter.value);
+    }
+    if (fullTank.present) {
+      map['full_tank'] = Variable<bool>(fullTank.value);
+    }
     return map;
   }
 
@@ -3453,7 +3610,10 @@ class FuelEntriesCompanion extends UpdateCompanion<FuelEntry> {
           ..write('vehicleId: $vehicleId, ')
           ..write('date: $date, ')
           ..write('liters: $liters, ')
-          ..write('odometerKm: $odometerKm')
+          ..write('odometerKm: $odometerKm, ')
+          ..write('fuelGrade: $fuelGrade, ')
+          ..write('pricePerLiter: $pricePerLiter, ')
+          ..write('fullTank: $fullTank')
           ..write(')'))
         .toString();
   }
@@ -6042,6 +6202,9 @@ typedef $$FuelEntriesTableCreateCompanionBuilder =
       required DateTime date,
       required double liters,
       required int odometerKm,
+      Value<String?> fuelGrade,
+      Value<double?> pricePerLiter,
+      Value<bool> fullTank,
     });
 typedef $$FuelEntriesTableUpdateCompanionBuilder =
     FuelEntriesCompanion Function({
@@ -6050,6 +6213,9 @@ typedef $$FuelEntriesTableUpdateCompanionBuilder =
       Value<DateTime> date,
       Value<double> liters,
       Value<int> odometerKm,
+      Value<String?> fuelGrade,
+      Value<double?> pricePerLiter,
+      Value<bool> fullTank,
     });
 
 final class $$FuelEntriesTableReferences
@@ -6102,6 +6268,21 @@ class $$FuelEntriesTableFilterComposer
 
   ColumnFilters<int> get odometerKm => $composableBuilder(
     column: $table.odometerKm,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get fuelGrade => $composableBuilder(
+    column: $table.fuelGrade,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get pricePerLiter => $composableBuilder(
+    column: $table.pricePerLiter,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get fullTank => $composableBuilder(
+    column: $table.fullTank,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -6158,6 +6339,21 @@ class $$FuelEntriesTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get fuelGrade => $composableBuilder(
+    column: $table.fuelGrade,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get pricePerLiter => $composableBuilder(
+    column: $table.pricePerLiter,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get fullTank => $composableBuilder(
+    column: $table.fullTank,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   $$VehiclesTableOrderingComposer get vehicleId {
     final $$VehiclesTableOrderingComposer composer = $composerBuilder(
       composer: this,
@@ -6204,6 +6400,17 @@ class $$FuelEntriesTableAnnotationComposer
     column: $table.odometerKm,
     builder: (column) => column,
   );
+
+  GeneratedColumn<String> get fuelGrade =>
+      $composableBuilder(column: $table.fuelGrade, builder: (column) => column);
+
+  GeneratedColumn<double> get pricePerLiter => $composableBuilder(
+    column: $table.pricePerLiter,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<bool> get fullTank =>
+      $composableBuilder(column: $table.fullTank, builder: (column) => column);
 
   $$VehiclesTableAnnotationComposer get vehicleId {
     final $$VehiclesTableAnnotationComposer composer = $composerBuilder(
@@ -6262,12 +6469,18 @@ class $$FuelEntriesTableTableManager
                 Value<DateTime> date = const Value.absent(),
                 Value<double> liters = const Value.absent(),
                 Value<int> odometerKm = const Value.absent(),
+                Value<String?> fuelGrade = const Value.absent(),
+                Value<double?> pricePerLiter = const Value.absent(),
+                Value<bool> fullTank = const Value.absent(),
               }) => FuelEntriesCompanion(
                 id: id,
                 vehicleId: vehicleId,
                 date: date,
                 liters: liters,
                 odometerKm: odometerKm,
+                fuelGrade: fuelGrade,
+                pricePerLiter: pricePerLiter,
+                fullTank: fullTank,
               ),
           createCompanionCallback:
               ({
@@ -6276,12 +6489,18 @@ class $$FuelEntriesTableTableManager
                 required DateTime date,
                 required double liters,
                 required int odometerKm,
+                Value<String?> fuelGrade = const Value.absent(),
+                Value<double?> pricePerLiter = const Value.absent(),
+                Value<bool> fullTank = const Value.absent(),
               }) => FuelEntriesCompanion.insert(
                 id: id,
                 vehicleId: vehicleId,
                 date: date,
                 liters: liters,
                 odometerKm: odometerKm,
+                fuelGrade: fuelGrade,
+                pricePerLiter: pricePerLiter,
+                fullTank: fullTank,
               ),
           withReferenceMapper: (p0) => p0
               .map(

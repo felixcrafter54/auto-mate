@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../core/l10n/fuel_labels.dart';
 import '../../core/providers/database_provider.dart';
 import '../../core/providers/profile_provider.dart';
 import '../../services/database/database.dart';
@@ -112,7 +113,7 @@ class _VehicleDetailView extends ConsumerWidget {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          _fuelLabel(fuelType),
+                          fuelTypeLabel(fuelType),
                           style: Theme.of(context).textTheme.bodyMedium,
                         ),
                       ],
@@ -133,13 +134,14 @@ class _VehicleDetailView extends ConsumerWidget {
 
           _SectionTitle('Wartung'),
           const SizedBox(height: 8),
-          _ActionTile(
-            icon: Icons.local_gas_station,
-            iconColor: cs.primary,
-            title: 'Tanken & Verbrauch',
-            subtitle: 'Tankfüllungen eintragen · Verbrauch berechnen',
-            onTap: () => context.push('/vehicle/${vehicle.id}/fuel'),
-          ),
+          if (fuelType.supportsFuelLog)
+            _ActionTile(
+              icon: Icons.local_gas_station,
+              iconColor: cs.primary,
+              title: 'Tanken & Verbrauch',
+              subtitle: 'Tankfüllungen eintragen · Verbrauch berechnen',
+              onTap: () => context.push('/vehicle/${vehicle.id}/fuel'),
+            ),
           _ActionTile(
             icon: Icons.notifications_outlined,
             iconColor: cs.primary,
@@ -204,14 +206,6 @@ class _VehicleDetailView extends ConsumerWidget {
         FuelType.electric => Icons.bolt,
         FuelType.hybrid => Icons.eco,
         _ => Icons.local_gas_station,
-      };
-
-  String _fuelLabel(FuelType ft) => switch (ft) {
-        FuelType.petrol => 'Benzin',
-        FuelType.diesel => 'Diesel',
-        FuelType.electric => 'Elektro',
-        FuelType.hybrid => 'Hybrid',
-        FuelType.other => 'Sonstiges',
       };
 
   Future<void> _editMileage(
