@@ -512,6 +512,7 @@
 
   "garageFinderTitle": "Garages nearby",
   "garageFinderDefault": "Garage",
+  "garageFinderShowOnMap": "Show on map",
   "garageFinderFound": "{count} garages found",
   "@garageFinderFound": {
     "placeholders": { "count": { "type": "int" } }

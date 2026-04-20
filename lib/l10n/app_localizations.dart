@@ -2140,6 +2140,12 @@ abstract class AppLocalizations {
   /// **'Garage'**
   String get garageFinderDefault;
 
+  /// No description provided for @garageFinderShowOnMap.
+  ///
+  /// In en, this message translates to:
+  /// **'Show on map'**
+  String get garageFinderShowOnMap;
+
   /// No description provided for @garageFinderFound.
   ///
   /// In en, this message translates to:

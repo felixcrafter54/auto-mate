@@ -1176,6 +1176,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get garageFinderDefault => 'Garage';
 
   @override
+  String get garageFinderShowOnMap => 'Show on map';
+
+  @override
   String garageFinderFound(int count) {
     return '$count garages found';
   }

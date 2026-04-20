@@ -1184,6 +1184,9 @@ class AppLocalizationsDe extends AppLocalizations {
   String get garageFinderDefault => 'Werkstatt';
 
   @override
+  String get garageFinderShowOnMap => 'Auf Karte zeigen';
+
+  @override
   String garageFinderFound(int count) {
     return '$count Werkstätten gefunden';
   }

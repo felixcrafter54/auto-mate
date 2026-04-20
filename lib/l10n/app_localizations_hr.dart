@@ -1171,6 +1171,9 @@ class AppLocalizationsHr extends AppLocalizations {
   String get garageFinderDefault => 'Servis';
 
   @override
+  String get garageFinderShowOnMap => 'Prikaži na karti';
+
+  @override
   String garageFinderFound(int count) {
     return 'Pronađeno $count servisa';
   }

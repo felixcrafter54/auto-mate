@@ -74,7 +74,7 @@ dependencies:
 
   # Voice for breakdown assistant (native only — graceful degrade on web)
   speech_to_text: ^7.0.0
-  flutter_tts: ^4.2.0
+  audioplayers: ^6.0.0
 
   # Maps (OSM, no API key) for garage finder
   flutter_map: ^7.0.2

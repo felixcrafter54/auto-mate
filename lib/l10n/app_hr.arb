@@ -370,6 +370,7 @@
 
   "garageFinderTitle": "Servisi u blizini",
   "garageFinderDefault": "Servis",
+  "garageFinderShowOnMap": "Prikaži na karti",
   "garageFinderFound": "Pronađeno {count} servisa",
   "garageFinderNoLocation": "Lokacija nije dostupna — pretraživanje oko centra Hrvatske.",
 

@@ -2,7 +2,7 @@ import 'package:auto_mate/l10n/app_localizations.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_tts/flutter_tts.dart';
+import 'package:audioplayers/audioplayers.dart';
 import 'package:go_router/go_router.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
 import '../../core/providers/database_provider.dart';
@@ -30,7 +30,7 @@ class _BreakdownScreenState extends ConsumerState<BreakdownScreen> {
   bool _sending = false;
 
   final stt.SpeechToText _speech = stt.SpeechToText();
-  final FlutterTts _tts = FlutterTts();
+  final AudioPlayer _player = AudioPlayer();
   bool _speechAvailable = false;
   bool _listening = false;
   bool _ttsEnabled = true;
@@ -44,8 +44,6 @@ class _BreakdownScreenState extends ConsumerState<BreakdownScreen> {
   Future<void> _initVoice() async {
     if (kIsWeb) return;
     final ok = await _speech.initialize(onError: (_) {}, onStatus: (_) {});
-    await _tts.setLanguage('de-DE');
-    await _tts.setSpeechRate(0.5);
     if (mounted) setState(() => _speechAvailable = ok);
   }
 
@@ -54,7 +52,7 @@ class _BreakdownScreenState extends ConsumerState<BreakdownScreen> {
     _inputCtrl.dispose();
     _scrollCtrl.dispose();
     _speech.stop();
-    _tts.stop();
+    _player.dispose();
     super.dispose();
   }
 
@@ -112,7 +110,12 @@ class _BreakdownScreenState extends ConsumerState<BreakdownScreen> {
       _scrollToBottom();
 
       if (_ttsEnabled && !kIsWeb) {
-        await _tts.speak(reply);
+        try {
+          final wav = await service.textToSpeech(reply);
+          if (mounted) await _player.play(BytesSource(wav));
+        } catch (_) {
+          // TTS-Fehler still ignorieren — Text bleibt sichtbar
+        }
       }
     } catch (e) {
       if (!mounted) return;
@@ -155,7 +158,7 @@ class _BreakdownScreenState extends ConsumerState<BreakdownScreen> {
               tooltip: l.breakdownTts,
               onPressed: () async {
                 setState(() => _ttsEnabled = !_ttsEnabled);
-                if (!_ttsEnabled) await _tts.stop();
+                if (!_ttsEnabled) await _player.stop();
               },
             ),
           IconButton(

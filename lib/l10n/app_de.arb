@@ -370,6 +370,7 @@
 
   "garageFinderTitle": "Werkstätten in der Nähe",
   "garageFinderDefault": "Werkstatt",
+  "garageFinderShowOnMap": "Auf Karte zeigen",
   "garageFinderFound": "{count} Werkstätten gefunden",
   "garageFinderNoLocation": "Kein Standort verfügbar — Suche um Deutschland-Mitte.",
 

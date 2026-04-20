@@ -157,18 +157,34 @@ out center 40;
                                 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
                             userAgentPackageName: 'com.automate.app',
                           ),
+                          CircleLayer(
+                            circles: [
+                              CircleMarker(
+                                point: _center,
+                                radius: 10,
+                                color: Colors.blue.withValues(alpha: 0.85),
+                                borderColor: Colors.white,
+                                borderStrokeWidth: 2,
+                                useRadiusInMeter: false,
+                              ),
+                            ],
+                          ),
                           MarkerLayer(
                             markers: _garages
                                 .map((g) => Marker(
                                       point: g.position,
                                       width: 40,
                                       height: 40,
-                                      child: Icon(
-                                        Icons.location_on,
-                                        color: Theme.of(context)
-                                            .colorScheme
-                                            .error,
-                                        size: 32,
+                                      child: GestureDetector(
+                                        onTap: () =>
+                                            _showGarageSheet(context, g),
+                                        child: Icon(
+                                          Icons.location_on,
+                                          color: Theme.of(context)
+                                              .colorScheme
+                                              .error,
+                                          size: 32,
+                                        ),
                                       ),
                                     ))
                                 .toList(),
@@ -207,8 +223,13 @@ out center 40;
                       flex: 3,
                       child: ListView.builder(
                         itemCount: _garages.length,
-                        itemBuilder: (context, i) =>
-                            _GarageTile(garage: _garages[i], onFocus: _focus),
+                        itemBuilder: (context, i) => _GarageTile(
+                          garage: _garages[i],
+                          userPos: _center,
+                          onFocus: _focus,
+                          onSheet: () =>
+                              _showGarageSheet(context, _garages[i]),
+                        ),
                       ),
                     ),
                   ],
@@ -219,28 +240,110 @@ out center 40;
   void _focus(_Garage g) {
     _mapController.move(g.position, 15);
   }
+
+  String _distanceText(LatLng to) {
+    final m = const Distance().as(LengthUnit.Meter, _center, to).round();
+    return m < 1000 ? '$m m' : '${(m / 1000).toStringAsFixed(1)} km';
+  }
+
+  void _showGarageSheet(BuildContext context, _Garage g) {
+    final l = AppLocalizations.of(context);
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (_) {
+        return Padding(
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                g.name ?? l.garageFinderDefault,
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
+              const SizedBox(height: 4),
+              Text(
+                _distanceText(g.position),
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
+              ),
+              if (g.address != null) ...[
+                const SizedBox(height: 4),
+                Text(g.address!,
+                    style: Theme.of(context).textTheme.bodyMedium),
+              ],
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  if (g.phone != null)
+                    FilledButton.icon(
+                      icon: const Icon(Icons.phone),
+                      label: Text(g.phone!),
+                      onPressed: () async {
+                        final uri = Uri.parse('tel:${g.phone}');
+                        if (await canLaunchUrl(uri)) launchUrl(uri);
+                      },
+                    ),
+                  if (g.phone != null) const SizedBox(width: 8),
+                  OutlinedButton.icon(
+                    icon: const Icon(Icons.map_outlined),
+                    label: Text(l.garageFinderShowOnMap),
+                    onPressed: () {
+                      Navigator.pop(context);
+                      _focus(g);
+                    },
+                  ),
+                ],
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
 }
 
 class _GarageTile extends StatelessWidget {
   final _Garage garage;
+  final LatLng userPos;
   final void Function(_Garage) onFocus;
-  const _GarageTile({required this.garage, required this.onFocus});
+  final VoidCallback onSheet;
+  const _GarageTile({
+    required this.garage,
+    required this.userPos,
+    required this.onFocus,
+    required this.onSheet,
+  });
+
+  String _distanceText() {
+    final m =
+        const Distance().as(LengthUnit.Meter, userPos, garage.position).round();
+    return m < 1000 ? '$m m' : '${(m / 1000).toStringAsFixed(1)} km';
+  }
 
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
-    final subtitle = [garage.address, garage.phone].whereType<String>().join(' · ');
+    final parts = [garage.address, garage.phone].whereType<String>();
+    final subtitle = [_distanceText(), ...parts].join(' · ');
     return ListTile(
       leading: const CircleAvatar(child: Icon(Icons.build_outlined)),
       title: Text(garage.name ?? l.garageFinderDefault),
-      subtitle: subtitle.isEmpty ? null : Text(subtitle),
+      subtitle: Text(subtitle),
       trailing: Wrap(
         spacing: 4,
         children: [
           if (garage.phone != null)
             IconButton(
               icon: const Icon(Icons.phone),
-              onPressed: () => _launch('tel:${garage.phone}'),
+              onPressed: () async {
+                final uri = Uri.parse('tel:${garage.phone}');
+                if (await canLaunchUrl(uri)) launchUrl(uri);
+              },
             ),
           IconButton(
             icon: const Icon(Icons.map_outlined),
@@ -248,15 +351,8 @@ class _GarageTile extends StatelessWidget {
           ),
         ],
       ),
-      onTap: () => onFocus(garage),
+      onTap: onSheet,
     );
-  }
-
-  Future<void> _launch(String url) async {
-    final uri = Uri.parse(url);
-    if (await canLaunchUrl(uri)) {
-      await launchUrl(uri);
-    }
   }
 }
 
