@@ -57,10 +57,11 @@ this value.
 
 ### AI breakdown assistant
 - Voice-first interface — fully hands-free
-- Natural-language problem description via Google Gemini
+- Natural-language problem description via Google Gemini (`gemini-2.5-flash`)
+- AI responses spoken aloud via Google Gemini TTS (`gemini-3.1-flash-tts-preview`) — natural, low-latency German speech
 - OBD-II fault code reader via Bluetooth ELM327 adapter (native only)
 - Recommendations branch on skill level
-- Nearby garage finder on an OpenStreetMap view, using actual GPS
+- Nearby garage finder on OpenStreetMap with GPS, clickable markers, distance display, and direct call button
 
 ---
 
@@ -74,7 +75,9 @@ this value.
 | Routing            | go_router                                                |
 | Local DB           | Drift (SQLite on native, WASM worker + IndexedDB on web) |
 | AI / LLM           | Google Gemini (`gemini-2.5-flash`)                       |
-| Voice              | `speech_to_text` + `flutter_tts` (native)                |
+| AI TTS             | Google Gemini TTS (`gemini-3.1-flash-tts-preview`)       |
+| STT                | `speech_to_text` (native)                                |
+| Audio playback     | `audioplayers`                                           |
 | Vehicle specs      | NHTSA vPIC (free, no key)                                |
 | Tutorials          | YouTube Data API v3                                      |
 | Maps               | `flutter_map` + OpenStreetMap tiles                      |
@@ -146,9 +149,12 @@ Chrome only shows the "Install app" button for **release** builds —
 - Scheduled notifications only fire **while the PWA tab/window is open** — true background push would require Firebase Cloud Messaging + a server, which is intentionally out of scope for now.
 - The browser Notification API is wrapped via `package:web` with a conditional import; native builds use a stub so `dart:js_interop` is never imported on non-web platforms.
 
+### Internationalisation
+The app ships in **German, English, and Croatian** with a fourth "System language" option. All strings live in ARB files under `lib/l10n/`. The active locale is persisted in the Drift DB and applied at startup. To add a new language, add `app_<code>.arb` and run `flutter gen-l10n`.
+
 ### Graceful degradation
 Features that need native APIs degrade cleanly on the PWA:
-- Voice assistant, OBD-II BLE, camera OCR → native only; the app prompts to install the mobile app.
+- Voice assistant (STT + Gemini TTS), OBD-II BLE, camera OCR → native only; the app prompts to install the mobile app.
 - Location → PWA asks for browser permission; falls back to a central-Germany view if denied.
 
 ---
