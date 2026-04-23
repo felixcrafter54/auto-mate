@@ -1058,6 +1058,13 @@ class AppLocalizationsHr extends AppLocalizations {
       'Savjet: Pogledajte video u cijelosti prije nego što počnete. Zabilježite potrebne alate i dijelove.';
 
   @override
+  String get videoPlayerOpenInYoutube => 'Otvori na YouTubeu';
+
+  @override
+  String get videoPlayerNotEmbeddable =>
+      'Ovaj video se ne može reproducirati ovdje jer je autor onemogućio ugradnju.';
+
+  @override
   String get workshopTitle => 'Izvještaj za servis';
 
   @override

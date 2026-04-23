@@ -467,6 +467,8 @@
   "tutorialsNothingFound": "Nothing found",
 
   "videoPlayerTip": "Tip: Watch the video all the way through before you start. Note the tools and parts you'll need.",
+  "videoPlayerOpenInYoutube": "Open in YouTube",
+  "videoPlayerNotEmbeddable": "This video cannot be played here because the creator has disabled embedding.",
 
   "workshopTitle": "Workshop report",
   "workshopSharePdf": "Share as PDF",

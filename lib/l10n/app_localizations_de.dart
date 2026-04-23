@@ -1069,6 +1069,13 @@ class AppLocalizationsDe extends AppLocalizations {
       'Tipp: Sieh dir das Video einmal komplett an, bevor du loslegst. Notiere benötigte Werkzeuge und Teile.';
 
   @override
+  String get videoPlayerOpenInYoutube => 'In YouTube öffnen';
+
+  @override
+  String get videoPlayerNotEmbeddable =>
+      'Dieses Video kann nicht direkt abgespielt werden, da der Ersteller die Einbettung deaktiviert hat.';
+
+  @override
   String get workshopTitle => 'Werkstattbericht';
 
   @override

@@ -1063,6 +1063,13 @@ class AppLocalizationsEn extends AppLocalizations {
       'Tip: Watch the video all the way through before you start. Note the tools and parts you\'ll need.';
 
   @override
+  String get videoPlayerOpenInYoutube => 'Open in YouTube';
+
+  @override
+  String get videoPlayerNotEmbeddable =>
+      'This video cannot be played here because the creator has disabled embedding.';
+
+  @override
   String get workshopTitle => 'Workshop report';
 
   @override

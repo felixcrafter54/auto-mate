@@ -1942,6 +1942,18 @@ abstract class AppLocalizations {
   /// **'Tip: Watch the video all the way through before you start. Note the tools and parts you\'ll need.'**
   String get videoPlayerTip;
 
+  /// No description provided for @videoPlayerOpenInYoutube.
+  ///
+  /// In en, this message translates to:
+  /// **'Open in YouTube'**
+  String get videoPlayerOpenInYoutube;
+
+  /// No description provided for @videoPlayerNotEmbeddable.
+  ///
+  /// In en, this message translates to:
+  /// **'This video cannot be played here because the creator has disabled embedding.'**
+  String get videoPlayerNotEmbeddable;
+
   /// No description provided for @workshopTitle.
   ///
   /// In en, this message translates to:

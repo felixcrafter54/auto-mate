@@ -334,6 +334,8 @@
   "tutorialsNothingFound": "Ništa nije pronađeno",
 
   "videoPlayerTip": "Savjet: Pogledajte video u cijelosti prije nego što počnete. Zabilježite potrebne alate i dijelove.",
+  "videoPlayerOpenInYoutube": "Otvori na YouTubeu",
+  "videoPlayerNotEmbeddable": "Ovaj video se ne može reproducirati ovdje jer je autor onemogućio ugradnju.",
 
   "workshopTitle": "Izvještaj za servis",
   "workshopSharePdf": "Podijeli kao PDF",

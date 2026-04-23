@@ -334,6 +334,8 @@
   "tutorialsNothingFound": "Nichts gefunden",
 
   "videoPlayerTip": "Tipp: Sieh dir das Video einmal komplett an, bevor du loslegst. Notiere benötigte Werkzeuge und Teile.",
+  "videoPlayerOpenInYoutube": "In YouTube öffnen",
+  "videoPlayerNotEmbeddable": "Dieses Video kann nicht direkt abgespielt werden, da der Ersteller die Einbettung deaktiviert hat.",
 
   "workshopTitle": "Werkstattbericht",
   "workshopSharePdf": "Als PDF teilen",

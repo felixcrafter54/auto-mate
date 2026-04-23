@@ -49,6 +49,7 @@ class YoutubeService {
       'q': q,
       'maxResults': '$maxResults',
       'relevanceLanguage': 'de',
+      'videoEmbeddable': 'true',
       'key': apiKey,
     });
 
