@@ -1,8 +1,8 @@
 import 'package:auto_mate/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../core/providers/database_provider.dart';
 import '../../core/providers/profile_provider.dart';
 import '../../services/database/database.dart';
@@ -214,13 +214,20 @@ class _VideoCard extends StatelessWidget {
   final YoutubeVideo video;
   const _VideoCard({required this.video});
 
+  Future<void> _openYoutube() async {
+    final uri = Uri.parse('https://www.youtube.com/watch?v=${video.id}');
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       clipBehavior: Clip.antiAlias,
       child: InkWell(
-        onTap: () => context.push('/video/${video.id}', extra: video.title),
+        onTap: _openYoutube,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [

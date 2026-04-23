@@ -1,5 +1,8 @@
+import 'dart:async';
+
 import 'package:auto_mate/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:youtube_player_iframe/youtube_player_iframe.dart';
 
@@ -18,7 +21,8 @@ class VideoPlayerScreen extends StatefulWidget {
 
 class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
   late final YoutubePlayerController _controller;
-  bool _notEmbeddable = false;
+  late final StreamSubscription<YoutubePlayerValue> _sub;
+  bool _hasError = false;
 
   @override
   void initState() {
@@ -32,17 +36,20 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
         mute: false,
       ),
     );
-    _controller.listen((value) {
+    _sub = _controller.stream.listen((value) {
       if (!mounted) return;
-      if (value.error == YoutubeError.notEmbeddable && !_notEmbeddable) {
-        setState(() => _notEmbeddable = true);
+      if (value.hasError && !_hasError) {
+        setState(() => _hasError = true);
       }
     });
   }
 
   @override
   void dispose() {
+    _sub.cancel();
     _controller.close();
+    // Reset to all orientations when leaving the player
+    SystemChrome.setPreferredOrientations(DeviceOrientation.values);
     super.dispose();
   }
 
@@ -58,9 +65,30 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
+
+    if (_hasError) {
+      return Scaffold(
+        appBar: AppBar(
+          title: Text(widget.title, overflow: TextOverflow.ellipsis),
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.open_in_new),
+              tooltip: l.videoPlayerOpenInYoutube,
+              onPressed: _openInYoutube,
+            ),
+          ],
+        ),
+        body: _NotEmbeddableFallback(
+          title: widget.title,
+          onOpen: _openInYoutube,
+        ),
+      );
+    }
+
     return YoutubePlayerScaffold(
       controller: _controller,
       aspectRatio: 16 / 9,
+      autoFullScreen: false,
       builder: (context, player) {
         return Scaffold(
           appBar: AppBar(
@@ -73,28 +101,23 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
               ),
             ],
           ),
-          body: _notEmbeddable
-              ? _NotEmbeddableFallback(
-                  title: widget.title,
-                  onOpen: _openInYoutube,
-                )
-              : Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    player,
-                    Padding(
-                      padding: const EdgeInsets.all(16),
-                      child: Text(
-                        widget.title,
-                        style: Theme.of(context).textTheme.titleLarge,
-                      ),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      child: Text(l.videoPlayerTip),
-                    ),
-                  ],
+          body: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              player,
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: Text(
+                  widget.title,
+                  style: Theme.of(context).textTheme.titleLarge,
                 ),
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Text(l.videoPlayerTip),
+              ),
+            ],
+          ),
         );
       },
     );
@@ -104,10 +127,7 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
 class _NotEmbeddableFallback extends StatelessWidget {
   final String title;
   final VoidCallback onOpen;
-  const _NotEmbeddableFallback({
-    required this.title,
-    required this.onOpen,
-  });
+  const _NotEmbeddableFallback({required this.title, required this.onOpen});
 
   @override
   Widget build(BuildContext context) {
