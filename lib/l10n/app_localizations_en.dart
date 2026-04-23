@@ -1198,4 +1198,19 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get settingsLangHr => 'Croatian';
+
+  @override
+  String get navGarage => 'Garage';
+
+  @override
+  String get navMaintenance => 'Maintenance';
+
+  @override
+  String get navAssistant => 'Assistant';
+
+  @override
+  String get navProfile => 'Profile';
+
+  @override
+  String get navSelectVehicle => 'Select a vehicle';
 }

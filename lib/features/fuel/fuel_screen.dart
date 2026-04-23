@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../../core/l10n/fuel_labels.dart';
 import '../../core/providers/database_provider.dart';
+import '../../core/widgets/empty_state.dart';
 import '../../services/database/database.dart';
 import '../../services/km_reminder_service.dart';
 import '../../services/models/enums.dart';
@@ -77,7 +78,11 @@ class FuelScreen extends ConsumerWidget {
               _StatsCard(entries: entries, vehicle: vehicle),
               const SizedBox(height: 16),
               if (entries.isEmpty)
-                const _EmptyState()
+                EmptyState(
+                  icon: Icons.local_gas_station_rounded,
+                  title: l.fuelScreenEmptyTitle,
+                  subtitle: l.fuelScreenEmptyBody,
+                )
               else ...[
                 Text(
                   l.fuelScreenAllEntries,
@@ -497,7 +502,7 @@ class _AddFuelEntrySheetState extends ConsumerState<_AddFuelEntrySheet> {
     return Padding(
       padding: EdgeInsets.fromLTRB(
         24,
-        24,
+        16,
         24,
         24 + MediaQuery.of(context).viewInsets.bottom,
       ),
@@ -505,6 +510,20 @@ class _AddFuelEntrySheetState extends ConsumerState<_AddFuelEntrySheet> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          Center(
+            child: Container(
+              width: 36,
+              height: 4,
+              margin: const EdgeInsets.only(bottom: 16),
+              decoration: BoxDecoration(
+                color: Theme.of(context)
+                    .colorScheme
+                    .outline
+                    .withValues(alpha: 0.4),
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+          ),
           Text(
             l.fuelSheetTitle,
             style: Theme.of(context)
@@ -639,33 +658,3 @@ class _AddFuelEntrySheetState extends ConsumerState<_AddFuelEntrySheet> {
 // EMPTY STATE
 // ============================================================================
 
-class _EmptyState extends StatelessWidget {
-  const _EmptyState();
-
-  @override
-  Widget build(BuildContext context) {
-    final l = AppLocalizations.of(context);
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const SizedBox(height: 48),
-          Icon(
-            Icons.local_gas_station,
-            size: 72,
-            color: Theme.of(context).colorScheme.outline,
-          ),
-          const SizedBox(height: 16),
-          Text(l.fuelScreenEmptyTitle,
-              style: Theme.of(context).textTheme.titleLarge),
-          const SizedBox(height: 8),
-          Text(
-            l.fuelScreenEmptyBody,
-            style: Theme.of(context).textTheme.bodyMedium,
-            textAlign: TextAlign.center,
-          ),
-        ],
-      ),
-    );
-  }
-}

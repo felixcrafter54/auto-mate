@@ -90,6 +90,9 @@ dependencies:
   # Flag icons for language picker
   country_flags: ^3.0.0
 
+  # Typography
+  google_fonts: ^6.2.0
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

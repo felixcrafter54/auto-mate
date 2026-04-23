@@ -3,10 +3,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../providers/session_provider.dart';
 import '../providers/profile_provider.dart';
+import '../shell/app_shell.dart';
 import '../../features/onboarding/onboarding_screen.dart';
 import '../../features/onboarding/skill_quiz_screen.dart';
 import '../../features/onboarding/skill_result_screen.dart';
 import '../../features/dashboard/dashboard_screen.dart';
+import '../../features/profile/profile_screen.dart';
 import '../../features/vehicle_setup/presentation/vehicle_setup_screen.dart';
 import '../../features/vehicle_detail/vehicle_detail_screen.dart';
 import '../../features/reminders/reminders_screen.dart';
@@ -26,7 +28,6 @@ final goRouterProvider = Provider<GoRouter>((ref) {
   final persistedAsync = ref.watch(persistedUserIdProvider);
   final userAsync = ref.watch(currentUserProvider);
 
-  // Splash while loading session
   if (persistedAsync.isLoading || userAsync.isLoading) {
     return GoRouter(
       routes: [
@@ -54,15 +55,17 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         return null;
       }
 
-      if (loc == '/onboarding' || loc == '/skill-quiz' || loc == '/skill-result') {
+      if (loc == '/onboarding' ||
+          loc == '/skill-quiz' ||
+          loc == '/skill-result') {
         return '/';
       }
 
       return null;
     },
     routes: [
+      // Auth / Onboarding — no shell
       GoRoute(path: '/onboarding', builder: (_, _) => const OnboardingScreen()),
-      GoRoute(path: '/', builder: (_, _) => const DashboardScreen()),
       GoRoute(path: '/skill-quiz', builder: (_, _) => const SkillQuizScreen()),
       GoRoute(
         path: '/skill-result',
@@ -71,11 +74,23 @@ final goRouterProvider = Provider<GoRouter>((ref) {
           return SkillResultScreen(detectedLevel: level);
         },
       ),
+
+      // Full-screen flows — no shell
       GoRoute(
         path: '/vehicle-setup',
         builder: (_, _) => const VehicleSetupScreen(),
       ),
       GoRoute(path: '/settings', builder: (_, _) => const SettingsScreen()),
+      GoRoute(
+        path: '/video/:id',
+        builder: (_, state) {
+          final videoId = state.pathParameters['id']!;
+          final title = (state.extra as String?) ?? 'Video';
+          return VideoPlayerScreen(videoId: videoId, title: title);
+        },
+      ),
+
+      // Vehicle detail + sub-screens — no shell
       GoRoute(
         path: '/vehicle/:id',
         builder: (_, state) {
@@ -147,13 +162,14 @@ final goRouterProvider = Provider<GoRouter>((ref) {
           ),
         ],
       ),
-      GoRoute(
-        path: '/video/:id',
-        builder: (_, state) {
-          final videoId = state.pathParameters['id']!;
-          final title = (state.extra as String?) ?? 'Video';
-          return VideoPlayerScreen(videoId: videoId, title: title);
-        },
+
+      // Shell routes — show bottom navigation bar
+      ShellRoute(
+        builder: (context, state, child) => AppShell(child: child),
+        routes: [
+          GoRoute(path: '/', builder: (_, _) => const DashboardScreen()),
+          GoRoute(path: '/profile', builder: (_, _) => const ProfileScreen()),
+        ],
       ),
     ],
   );
@@ -163,6 +179,35 @@ class _SplashScreen extends StatelessWidget {
   const _SplashScreen();
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    final cs = Theme.of(context).colorScheme;
+    return Scaffold(
+      backgroundColor: cs.surface,
+      body: Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 80,
+              height: 80,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(20),
+                gradient: LinearGradient(
+                  colors: [cs.primaryContainer, cs.primary],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+              ),
+              child: Icon(Icons.directions_car_rounded,
+                  color: cs.onPrimary, size: 40),
+            ),
+            const SizedBox(height: 24),
+            CircularProgressIndicator(
+              color: cs.primary,
+              strokeWidth: 2,
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }

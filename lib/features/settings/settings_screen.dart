@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../core/providers/locale_provider.dart';
+import '../../core/widgets/section_header.dart';
 import '../../services/notification_service.dart';
 import '../../services/settings_service.dart';
 
@@ -192,7 +193,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       body: ListView(
         padding: const EdgeInsets.all(20),
         children: [
-          _SectionTitle(l.settingsApiKeysSection),
+          SectionHeader(l.settingsApiKeysSection),
           const SizedBox(height: 4),
           Text(
             l.settingsApiKeysHint,
@@ -249,7 +250,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           ),
           const SizedBox(height: 28),
 
-          _SectionTitle(l.settingsNotificationsSection),
+          SectionHeader(l.settingsNotificationsSection),
           const SizedBox(height: 8),
           Card(
             color: _notifyPermissionGranted
@@ -345,7 +346,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           ),
           const SizedBox(height: 28),
 
-          _SectionTitle(l.settingsAppLanguageSection),
+          SectionHeader(l.settingsAppLanguageSection),
           const SizedBox(height: 12),
           DropdownButtonFormField<String?>(
             decoration: InputDecoration(
@@ -394,7 +395,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           ),
           const SizedBox(height: 28),
 
-          _SectionTitle(l.settingsReportSection),
+          SectionHeader(l.settingsReportSection),
           const SizedBox(height: 12),
           DropdownButtonFormField<String>(
             decoration: InputDecoration(
@@ -455,17 +456,3 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   }
 }
 
-class _SectionTitle extends StatelessWidget {
-  final String text;
-  const _SectionTitle(this.text);
-  @override
-  Widget build(BuildContext context) {
-    return Text(
-      text,
-      style: Theme.of(context)
-          .textTheme
-          .titleMedium
-          ?.copyWith(fontWeight: FontWeight.bold),
-    );
-  }
-}

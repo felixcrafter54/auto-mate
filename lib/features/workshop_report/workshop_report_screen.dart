@@ -207,15 +207,45 @@ class _WorkshopReportScreenState extends ConsumerState<WorkshopReportScreen> {
               ],
               if (_report != null) ...[
                 const SizedBox(height: 24),
-                Text(l.workshopAnalysisTitle,
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        )),
-                const SizedBox(height: 8),
                 Card(
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: SelectableText(_report!),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 10),
+                        decoration: BoxDecoration(
+                          color: Theme.of(context)
+                              .colorScheme
+                              .secondary
+                              .withValues(alpha: 0.12),
+                          borderRadius: const BorderRadius.only(
+                            topLeft: Radius.circular(16),
+                            topRight: Radius.circular(16),
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(Icons.auto_awesome_rounded,
+                                size: 16,
+                                color: Theme.of(context).colorScheme.secondary),
+                            const SizedBox(width: 8),
+                            Text(
+                              'AutoMate AI',
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w700,
+                                color: Theme.of(context).colorScheme.secondary,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: SelectableText(_report!),
+                      ),
+                    ],
                   ),
                 ),
                 const SizedBox(height: 16),

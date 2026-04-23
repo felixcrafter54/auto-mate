@@ -239,7 +239,15 @@ class _EmptyIntro extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.mic_none, size: 56, color: cs.primary),
+          Container(
+            width: 72,
+            height: 72,
+            decoration: BoxDecoration(
+              color: cs.secondary.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Icon(Icons.mic_rounded, size: 36, color: cs.secondary),
+          ),
           const SizedBox(height: 12),
           Text(
             l.breakdownPlaceholder(vehicle.make),
@@ -297,7 +305,10 @@ class _Bubble extends StatelessWidget {
         margin: const EdgeInsets.only(bottom: 10),
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         decoration: BoxDecoration(
-          color: isUser ? cs.primary : cs.surfaceContainerHighest,
+          color: isUser ? cs.primary : cs.surfaceContainer,
+          border: isUser
+              ? null
+              : Border.all(color: cs.outlineVariant),
           borderRadius: BorderRadius.only(
             topLeft: const Radius.circular(16),
             topRight: const Radius.circular(16),
@@ -317,8 +328,30 @@ class _Bubble extends StatelessWidget {
   }
 }
 
-class _TypingBubble extends StatelessWidget {
+class _TypingBubble extends StatefulWidget {
   const _TypingBubble();
+  @override
+  State<_TypingBubble> createState() => _TypingBubbleState();
+}
+
+class _TypingBubbleState extends State<_TypingBubble>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _ctrl;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 900),
+    )..repeat();
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -327,21 +360,40 @@ class _TypingBubble extends StatelessWidget {
       alignment: Alignment.centerLeft,
       child: Container(
         margin: const EdgeInsets.only(bottom: 10),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         decoration: BoxDecoration(
-          color: cs.surfaceContainerHighest,
-          borderRadius: BorderRadius.circular(16),
-        ),
-        child: const SizedBox(
-          width: 40,
-          height: 12,
-          child: Center(
-            child: SizedBox(
-              width: 18,
-              height: 18,
-              child: CircularProgressIndicator(strokeWidth: 2),
-            ),
+          color: cs.surfaceContainer,
+          border: Border.all(color: cs.outlineVariant),
+          borderRadius: const BorderRadius.only(
+            topLeft: Radius.circular(16),
+            topRight: Radius.circular(16),
+            bottomRight: Radius.circular(16),
+            bottomLeft: Radius.circular(4),
           ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: List.generate(3, (i) {
+            return AnimatedBuilder(
+              animation: _ctrl,
+              builder: (_, __) {
+                final phase = ((_ctrl.value * 3) - i).clamp(0.0, 1.0);
+                final opacity = phase < 0.5
+                    ? phase * 2
+                    : (1 - phase) * 2;
+                return Container(
+                  margin: EdgeInsets.only(right: i < 2 ? 4 : 0),
+                  width: 8,
+                  height: 8,
+                  decoration: BoxDecoration(
+                    color: cs.onSurfaceVariant
+                        .withValues(alpha: 0.3 + opacity * 0.7),
+                    shape: BoxShape.circle,
+                  ),
+                );
+              },
+            );
+          }),
         ),
       ),
     );
@@ -387,8 +439,25 @@ class _InputBar extends StatelessWidget {
                 maxLines: 4,
                 decoration: InputDecoration(
                   hintText: l.breakdownInputPlaceholder,
-                  border: const OutlineInputBorder(),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(24),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(24),
+                    borderSide: BorderSide(
+                      color: Theme.of(context).colorScheme.outline,
+                    ),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(24),
+                    borderSide: BorderSide(
+                      color: Theme.of(context).colorScheme.primary,
+                      width: 2,
+                    ),
+                  ),
                   isDense: true,
+                  contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 16, vertical: 10),
                 ),
                 textInputAction: TextInputAction.send,
                 onSubmitted: (_) => onSend(),

@@ -377,5 +377,11 @@
   "settingsAppLanguageSection": "App-Sprache",
   "settingsAppLanguageLabel": "Anzeigesprache",
   "settingsAppLanguageSystem": "Systemsprache",
-  "settingsLangHr": "Kroatisch"
+  "settingsLangHr": "Kroatisch",
+
+  "navGarage": "Garage",
+  "navMaintenance": "Wartung",
+  "navAssistant": "Assistent",
+  "navProfile": "Profil",
+  "navSelectVehicle": "Fahrzeug auswählen"
 }

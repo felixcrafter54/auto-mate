@@ -2181,6 +2181,36 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Croatian'**
   String get settingsLangHr;
+
+  /// No description provided for @navGarage.
+  ///
+  /// In en, this message translates to:
+  /// **'Garage'**
+  String get navGarage;
+
+  /// No description provided for @navMaintenance.
+  ///
+  /// In en, this message translates to:
+  /// **'Maintenance'**
+  String get navMaintenance;
+
+  /// No description provided for @navAssistant.
+  ///
+  /// In en, this message translates to:
+  /// **'Assistant'**
+  String get navAssistant;
+
+  /// No description provided for @navProfile.
+  ///
+  /// In en, this message translates to:
+  /// **'Profile'**
+  String get navProfile;
+
+  /// No description provided for @navSelectVehicle.
+  ///
+  /// In en, this message translates to:
+  /// **'Select a vehicle'**
+  String get navSelectVehicle;
 }
 
 class _AppLocalizationsDelegate

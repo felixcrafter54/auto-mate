@@ -1206,4 +1206,19 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get settingsLangHr => 'Kroatisch';
+
+  @override
+  String get navGarage => 'Garage';
+
+  @override
+  String get navMaintenance => 'Wartung';
+
+  @override
+  String get navAssistant => 'Assistent';
+
+  @override
+  String get navProfile => 'Profil';
+
+  @override
+  String get navSelectVehicle => 'Fahrzeug auswählen';
 }

@@ -522,5 +522,11 @@
   "settingsAppLanguageSection": "App language",
   "settingsAppLanguageLabel": "Interface language",
   "settingsAppLanguageSystem": "System default",
-  "settingsLangHr": "Croatian"
+  "settingsLangHr": "Croatian",
+
+  "navGarage": "Garage",
+  "navMaintenance": "Maintenance",
+  "navAssistant": "Assistant",
+  "navProfile": "Profile",
+  "navSelectVehicle": "Select a vehicle"
 }

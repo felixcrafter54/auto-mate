@@ -6,8 +6,8 @@ import 'package:intl/intl.dart';
 import 'package:drift/drift.dart' show Value;
 import '../../core/l10n/reminder_labels.dart';
 import '../../core/providers/database_provider.dart';
+import '../../core/widgets/empty_state.dart';
 import '../../services/database/database.dart';
-
 import '../../services/models/enums.dart';
 import '../../services/notification_service.dart';
 
@@ -42,7 +42,11 @@ class RemindersScreen extends ConsumerWidget {
         data: (reminders) {
           final sorted = [...reminders]
             ..sort((a, b) => a.dueDate.compareTo(b.dueDate));
-          if (sorted.isEmpty) return const _EmptyState();
+          if (sorted.isEmpty) return EmptyState(
+            icon: Icons.notifications_none_rounded,
+            title: l.remindersEmpty,
+            subtitle: l.remindersEmptyHint,
+          );
 
           final currentMileage = vehicleAsync.valueOrNull?.currentMileage ?? 0;
           return ListView.builder(
@@ -172,35 +176,6 @@ class RemindersScreen extends ConsumerWidget {
   }
 }
 
-class _EmptyState extends StatelessWidget {
-  const _EmptyState();
-  @override
-  Widget build(BuildContext context) {
-    final l = AppLocalizations.of(context);
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.notifications_none,
-            size: 72,
-            color: Theme.of(context).colorScheme.outline,
-          ),
-          const SizedBox(height: 16),
-          Text(l.remindersEmpty,
-              style: Theme.of(context).textTheme.titleLarge),
-          const SizedBox(height: 8),
-          Text(
-            l.remindersEmptyHint,
-            style: Theme.of(context).textTheme.bodyMedium,
-            textAlign: TextAlign.center,
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 class _ReminderCard extends StatelessWidget {
   final Reminder reminder;
   final int currentMileage;
@@ -237,48 +212,71 @@ class _ReminderCard extends StatelessWidget {
 
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 12, 8, 12),
+      clipBehavior: Clip.antiAlias,
+      child: IntrinsicHeight(
         child: Row(
           children: [
-            CircleAvatar(
-              backgroundColor: statusColor.withValues(alpha: 0.15),
-              child: Icon(_typeIcon(type), color: statusColor),
-            ),
-            const SizedBox(width: 14),
+            // Left accent bar
+            Container(width: 4, color: statusColor),
             Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(label,
-                      style:
-                          const TextStyle(fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 2),
-                  Text(
-                    _dateLabel(l, reminder.dueDate, daysLeft, overdue),
-                    style: TextStyle(color: statusColor),
-                  ),
-                  if (reminder.dueMileage != null) ...[
-                    const SizedBox(height: 2),
-                    Text(
-                      _kmLabel(l, reminder, currentMileage),
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: _kmColor(reminder, currentMileage, cs),
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(14, 12, 8, 12),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        color: statusColor.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Icon(_typeIcon(type), color: statusColor, size: 20),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(label,
+                              style: const TextStyle(
+                                  fontWeight: FontWeight.w600)),
+                          const SizedBox(height: 2),
+                          Text(
+                            _dateLabel(l, reminder.dueDate, daysLeft, overdue),
+                            style: TextStyle(
+                                color: statusColor, fontSize: 12),
                           ),
+                          if (reminder.dueMileage != null) ...[
+                            const SizedBox(height: 2),
+                            Text(
+                              _kmLabel(l, reminder, currentMileage),
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .bodySmall
+                                  ?.copyWith(
+                                    color: _kmColor(
+                                        reminder, currentMileage, cs),
+                                  ),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                    IconButton(
+                      icon: Icon(Icons.check_circle_outline_rounded,
+                          color: cs.primary),
+                      tooltip: l.remindersMarkDone,
+                      onPressed: onDone,
+                    ),
+                    IconButton(
+                      icon:
+                          Icon(Icons.delete_outline, color: cs.error),
+                      tooltip: l.commonDelete,
+                      onPressed: onDelete,
                     ),
                   ],
-                ],
+                ),
               ),
-            ),
-            IconButton(
-              icon: const Icon(Icons.check_circle_outline),
-              tooltip: l.remindersMarkDone,
-              onPressed: onDone,
-            ),
-            IconButton(
-              icon: Icon(Icons.delete_outline, color: cs.error),
-              tooltip: l.commonDelete,
-              onPressed: onDelete,
             ),
           ],
         ),

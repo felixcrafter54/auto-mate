@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../../core/l10n/reminder_labels.dart';
 import '../../core/providers/database_provider.dart';
+import '../../core/widgets/empty_state.dart';
 import '../../services/database/database.dart';
 import '../../services/models/enums.dart';
 
@@ -28,7 +29,11 @@ class HistoryScreen extends ConsumerWidget {
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(child: Text(l.commonError(e.toString()))),
         data: (list) {
-          if (list.isEmpty) return const _Empty();
+          if (list.isEmpty) return EmptyState(
+            icon: Icons.history_rounded,
+            title: l.historyEmpty,
+            subtitle: l.historyEmptyHint,
+          );
           return ListView.builder(
             padding: const EdgeInsets.all(16),
             itemCount: list.length,
@@ -79,32 +84,6 @@ class HistoryScreen extends ConsumerWidget {
     if (!context.mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(l.historyDeleted)),
-    );
-  }
-}
-
-class _Empty extends StatelessWidget {
-  const _Empty();
-  @override
-  Widget build(BuildContext context) {
-    final l = AppLocalizations.of(context);
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.history, size: 72, color: Theme.of(context).colorScheme.outline),
-          const SizedBox(height: 16),
-          Text(l.historyEmpty, style: Theme.of(context).textTheme.titleLarge),
-          const SizedBox(height: 8),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 40),
-            child: Text(
-              l.historyEmptyHint,
-              textAlign: TextAlign.center,
-            ),
-          ),
-        ],
-      ),
     );
   }
 }

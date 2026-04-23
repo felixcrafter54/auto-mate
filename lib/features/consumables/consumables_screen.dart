@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/providers/database_provider.dart';
+import '../../core/widgets/empty_state.dart';
+import '../../core/widgets/info_row.dart';
 import '../../services/database/database.dart';
 
 final _consumablesProvider =
@@ -42,7 +44,16 @@ class ConsumablesScreen extends ConsumerWidget {
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(child: Text(l.commonError(e.toString()))),
         data: (data) {
-          if (data == null) return _Empty(onAdd: () => _openEditor(context, ref, null));
+          if (data == null) return EmptyState(
+            icon: Icons.oil_barrel_outlined,
+            title: l.consumablesEmpty,
+            subtitle: l.consumablesEmptyHint,
+            action: FilledButton.icon(
+              icon: const Icon(Icons.add_rounded),
+              label: Text(l.consumablesAddButton),
+              onPressed: () => _openEditor(context, ref, null),
+            ),
+          );
           final vehicle = vehicleAsync.valueOrNull;
           return _Content(data: data, vehicle: vehicle);
         },
@@ -66,43 +77,6 @@ class ConsumablesScreen extends ConsumerWidget {
   }
 }
 
-class _Empty extends StatelessWidget {
-  final VoidCallback onAdd;
-  const _Empty({required this.onAdd});
-
-  @override
-  Widget build(BuildContext context) {
-    final l = AppLocalizations.of(context);
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.oil_barrel_outlined,
-            size: 72,
-            color: Theme.of(context).colorScheme.outline,
-          ),
-          const SizedBox(height: 16),
-          Text(l.consumablesEmpty, style: Theme.of(context).textTheme.titleLarge),
-          const SizedBox(height: 8),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 40),
-            child: Text(
-              l.consumablesEmptyHint,
-              textAlign: TextAlign.center,
-            ),
-          ),
-          const SizedBox(height: 24),
-          FilledButton.icon(
-            icon: const Icon(Icons.add),
-            label: Text(l.consumablesAddButton),
-            onPressed: onAdd,
-          ),
-        ],
-      ),
-    );
-  }
-}
 
 class _Content extends StatelessWidget {
   final ConsumablesTableData data;
@@ -138,15 +112,24 @@ class _Content extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 16),
-        _SpecRow(icon: Icons.oil_barrel, label: l.consumablesEngineOil, value: data.engineOilGrade),
-        _SpecRow(
-          icon: Icons.water_drop,
-          label: l.consumablesOilVolume,
-          value: '${data.engineOilVolume.toStringAsFixed(1)} l',
+        Card(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: Column(
+              children: [
+                InfoRow(icon: Icons.oil_barrel, label: l.consumablesEngineOil, value: data.engineOilGrade),
+                const Divider(height: 1),
+                InfoRow(icon: Icons.water_drop, label: l.consumablesOilVolume, value: '${data.engineOilVolume.toStringAsFixed(1)} l'),
+                const Divider(height: 1),
+                InfoRow(icon: Icons.local_drink, label: l.consumablesCoolant, value: data.coolantType),
+                const Divider(height: 1),
+                InfoRow(icon: Icons.opacity, label: l.consumablesBrakeFluid, value: data.brakeFluidSpec),
+                const Divider(height: 1),
+                InfoRow(icon: Icons.settings, label: l.consumablesTransmissionFluid, value: data.transmissionFluid),
+              ],
+            ),
+          ),
         ),
-        _SpecRow(icon: Icons.local_drink, label: l.consumablesCoolant, value: data.coolantType),
-        _SpecRow(icon: Icons.opacity, label: l.consumablesBrakeFluid, value: data.brakeFluidSpec),
-        _SpecRow(icon: Icons.settings, label: l.consumablesTransmissionFluid, value: data.transmissionFluid),
         const SizedBox(height: 16),
         OutlinedButton.icon(
           icon: const Icon(Icons.copy_all_outlined),
@@ -181,30 +164,6 @@ class _Content extends StatelessWidget {
   }
 }
 
-class _SpecRow extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final String value;
-  const _SpecRow({required this.icon, required this.label, required this.value});
-
-  @override
-  Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    return Card(
-      margin: const EdgeInsets.only(bottom: 8),
-      color: cs.surfaceContainerHighest,
-      elevation: 0,
-      child: ListTile(
-        leading: Icon(icon, color: cs.primary),
-        title: Text(label, style: const TextStyle(fontWeight: FontWeight.w500)),
-        trailing: Text(
-          value,
-          style: TextStyle(fontWeight: FontWeight.bold, color: cs.primary),
-        ),
-      ),
-    );
-  }
-}
 
 // ============================================================================
 // EDITOR
