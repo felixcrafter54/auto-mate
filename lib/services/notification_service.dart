@@ -9,14 +9,13 @@ import 'package:timezone/timezone.dart' as tz;
 import 'web_notification_stub.dart'
     if (dart.library.html) 'web_notification_web.dart';
 
-/// Wrapper around flutter_local_notifications with a web fallback built on
-/// the browser Notification API. On web, scheduled notifications only fire
-/// while the PWA tab is open (timers are in-memory) — background push would
-/// require FCM, which is out of scope for now.
 class NotificationService {
   static final _plugin = FlutterLocalNotificationsPlugin();
   static bool _initialized = false;
   static final Map<int, Timer> _webTimers = {};
+
+  static bool get _isLinux =>
+      !kIsWeb && defaultTargetPlatform == TargetPlatform.linux;
 
   Future<void> init() async {
     if (_initialized) return;
@@ -34,28 +33,28 @@ class NotificationService {
       requestBadgePermission: true,
       requestSoundPermission: true,
     );
+    const linuxSettings =
+        LinuxInitializationSettings(defaultActionName: 'Open AutoMate');
 
     await _plugin.initialize(
       const InitializationSettings(
         android: androidSettings,
         iOS: iosSettings,
+        linux: linuxSettings,
       ),
     );
     _initialized = true;
   }
 
-  /// Returns true if the user has already granted notification permission.
   Future<bool> hasPermission() async {
     if (kIsWeb) {
       return WebNotificationApi.permission == 'granted';
     }
+    if (_isLinux) return true;
     final status = await Permission.notification.status;
     return status.isGranted;
   }
 
-  /// Requests notification permission. Returns true if granted.
-  /// Shows the native OS dialog on Android 13+, iOS, and the browser prompt
-  /// on web.
   Future<bool> requestPermission() async {
     if (kIsWeb) {
       if (WebNotificationApi.permission == 'granted') return true;
@@ -63,14 +62,13 @@ class NotificationService {
       final result = await WebNotificationApi.requestPermission();
       return result == 'granted';
     }
+    if (_isLinux) return true;
     final status = await Permission.notification.request();
     return status.isGranted;
   }
 
-  /// Opens the OS settings for the app. On web this is a no-op — browsers
-  /// don't expose a way to programmatically open site permission settings.
   Future<void> openSystemSettings() async {
-    if (kIsWeb) return;
+    if (kIsWeb || _isLinux) return;
     await openAppSettings();
   }
 
@@ -84,6 +82,8 @@ class NotificationService {
       _scheduleWeb(id: id, title: title, body: body, when: when);
       return;
     }
+    // libnotify (Linux) doesn't support scheduled notifications
+    if (_isLinux) return;
     await init();
     final delay = when.difference(DateTime.now());
     if (delay.isNegative) return;
@@ -116,8 +116,6 @@ class NotificationService {
     );
   }
 
-  /// Shows a notification immediately. Useful for testing that the
-  /// permission and delivery pipeline actually works.
   Future<void> showNow({
     required int id,
     required String title,
@@ -136,7 +134,9 @@ class NotificationService {
       priority: Priority.high,
     );
     const ios = DarwinNotificationDetails();
-    const details = NotificationDetails(android: android, iOS: ios);
+    const linux = LinuxNotificationDetails();
+    const details =
+        NotificationDetails(android: android, iOS: ios, linux: linux);
     await _plugin.show(id, title, body, details);
   }
 
